@@ -1,0 +1,60 @@
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE warehouse (
+    warehouse_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255),   
+    length FLOAT NOT NULL,
+    width FLOAT NOT NULL,
+    height FLOAT NOT NULL,
+    usable_space FLOAT
+);
+
+
+CREATE TABLE racks (
+    rack_id SERIAL PRIMARY KEY,
+    warehouse_id INT REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
+    name VARCHAR(50),
+    length FLOAT NOT NULL,
+    width FLOAT NOT NULL,
+    height FLOAT,
+    number_of_bins INT
+);
+
+
+
+CREATE TABLE bins (
+    bin_id SERIAL PRIMARY KEY,
+    warehouse_id INT REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
+    length FLOAT NOT NULL,
+    width FLOAT NOT NULL,
+    height FLOAT NOT NULL,
+    capacity FLOAT NOT NULL,
+    rack_id INT REFERENCES racks(rack_id) ON DELETE CASCADE,
+    current_load FLOAT DEFAULT 0
+
+);
+
+
+
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    size NUMERIC(10,2) NOT NULL,           -- e.g., volume per unit
+    weight NUMERIC(10,2) NOT NULL,         -- optional, if used for load calc
+    quantity INTEGER NOT NULL CHECK (quantity >= 0),
+    priority INTEGER NOT NULL CHECK (priority IN (0, 1, 2)), -- 0=Low, 1=Medium, 2=High
+    warehouse TEXT NOT NULL,               -- warehouse name (for quick reference)
+    company_name TEXT NOT NULL,            -- company owning the product
+    bin_id INTEGER NOT NULL REFERENCES bins(bin_id) ON DELETE CASCADE,
+    rack_id INTEGER NOT NULL REFERENCES racks(rack_id) ON DELETE CASCADE,
+    inserted_at TIMESTAMP DEFAULT NOW()
+);

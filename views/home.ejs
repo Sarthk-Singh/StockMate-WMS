@@ -1,0 +1,167 @@
+<%- include('partials/header.ejs') %>
+
+<title>Main Page</title>
+<link rel="stylesheet" href="/styles/home.css" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+/>
+
+<section class="main">
+  <section class="navbar">
+    <div class="logo">
+      <img src="/images/logo.png" alt="SM " />
+    </div>
+    <div class="menu">
+      <ul>
+        <li><a href="/home">Home</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/Storage">Storage</a></li>
+        <li><a href="#about">Services</a></li>
+      </ul>
+    </div>
+    <div class="profile">
+      <i class="fa-solid fa-user"></i>
+    </div>
+  </section>
+
+  <section class="homePage">
+    <video
+      src="/images/4281239-uhd_3840_2160_25fps.mp4"
+      muted
+      autoplay
+      loop
+    ></video>
+    <div class="text">
+      <h1>Warehouse optimization.</h1>
+      <h1>Packing <span>Intelligence</span> Into Every <span>Shelf</span>.</h1>
+    </div>
+    <div class="buttons">
+      <div class="makeInv">
+        <i class="fa-solid fa-warehouse"></i>
+        <a href="/makeInv" class="transition-link">Make Inventory</a>
+      </div>
+      <div class="manageInv">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <a href="/warehouse">Manage Inventory</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="leftPortion">
+      <div class="heading">
+        <h3>Streamline your warehouse</h3>
+        <h2>StockMate - Smart Storage for Modern Warehouses</h2>
+      </div>
+      <div class="para">
+        <p>At StockMate-WMS, we’re focused on one goal: making warehouse management smarter, faster, and more efficient. Our project brings together powerful algorithms and user-friendly design to solve everyday challenges faced in warehouse operations.</p>
+        <p>By using the Knapsack Algorithm, we ensure every product is stored in the most space-efficient way possible. And with Hashing, we allow lightning-fast product retrieval — no more wasting time searching shelves.</p>
+      </div>
+    </div>
+    <div class="rightPortion">
+      <img src="/images/bg-2.jpg" alt="Image Not found">
+    </div>
+  </section>
+
+
+
+  <% if (warehouseMsg) { %>
+    <div class="showError">
+      <div class="ib">
+        <i class="fa-solid fa-circle-check" style="color: #63E6BE;"></i>
+      </div>
+      <h1>Success</h1>
+      <h3>Warehouse is Created SuccessFully</h3>
+      <button id="ok">OK</button>
+    </div>
+  <% } else if (addedProduct) { %>
+    <div class="showError">
+      <div class="ib">
+        <i class="fa-solid fa-circle-check" style="color: #63E6BE;"></i>
+      </div>
+      <h1>Successfully Added</h1>
+      <h3>Product is Added in Rack : <strong><%= rack %> </strong>.  Bin : <strong><%= bin %></strong></h3>
+      <button id="ok">OK</button>
+    </div>
+  <% } %>
+  
+<!-- ------------------------------------------ -->
+ <!-- profile icons Start-->
+<!-- ------------------------------------------ -->
+
+  <% if(name && email && cname){ %>
+  <div class="profilei">
+    <div class="info">
+      <h3> <i class="fa-regular fa-user" style="color: #03aa54;"></i> <%= name %> </h3>
+      <h3> <i class="fa-regular fa-envelope" style="color: #03aa54;"></i> <%= email %></h3>
+    </div>
+    <hr>
+    <h2> <i class="fa-regular fa-building" style="color: #03aa54;"></i> <%= cname %></h2>
+    <a href="ok2">Logout</a>
+  </div>
+
+  <% } %>
+</section>
+<!-- ------------------------------------------ -->
+ <!-- profile icons Ends -->
+<!-- ------------------------------------------ -->
+
+
+<script>
+  const pro = document.querySelector(".profile");
+  document.querySelectorAll('a.transition-link').forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      const href = this.getAttribute('href');
+
+      document.body.classList.add('fade-out');
+
+      setTimeout(() => {
+        window.location.href = href;
+      }, 500); 
+    });
+  });
+
+
+const profile = document.querySelector(".profilei");
+
+pro.addEventListener("click", (e) => {
+  if (profile.style.opacity === "0" || profile.style.opacity === "") {
+    profile.style.opacity = "1";
+    profile.style.pointerEvents = "auto";
+  } else {
+    profile.style.opacity = "0";
+    profile.style.pointerEvents = "none";
+  }
+
+  if (!profile.contains(e.target) && !pro.contains(e.target)) {
+    profile.style.opacity = "0";
+    profile.style.pointerEvents = "none";
+  }
+});
+
+
+// -----------
+
+const okButton2 = document.querySelector("#ok2");
+const okButton = document.querySelector("#ok");
+
+
+if(okButton){
+    okButton.addEventListener('click',()=>{
+        document.querySelector(".showError").style.display = 'none';
+    })
+    }
+
+    if(okButton2){
+    okButton2.addEventListener('click',()=>{
+        window.location.href = "/";
+    })
+    }
+
+
+
+</script>
+
+<%-include('partials/footer.ejs') %>

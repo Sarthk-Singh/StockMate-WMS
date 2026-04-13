@@ -1,0 +1,76 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,body{
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll; 
+  background-color: var(--bgColor);
+}
+
+::-webkit-scrollbar{
+    display: none;
+}
+
+a{
+    text-decoration: none;
+}
+
+
+/* Font-Families  */
+
+
+@font-face {
+    font-family: InterMedium;
+    src : url(../fonts/Inter-Medium.ttf)
+  
+}
+@font-face {
+    font-family: InterBold;
+    src: url(../fonts/Inter-Bold.ttf);
+}
+
+@font-face {
+    font-family: InterLight;
+    src: url(../fonts/Inter-Light.ttf);
+}
+
+@font-face {
+    font-family: InterRegular;
+    src: url(../fonts/BaskervvilleSC-Regular.ttf)
+}
+@font-face {
+    font-family: CaveatMedium;
+    src: url(../fonts/BaskervvilleSC-Regular.ttf)
+}
+
+@font-face {
+    font-family: CaveatBold;
+    src: url(../fonts/Caveat-SemiBold.ttf);
+}
+
+@font-face {
+    font-family: cavv;
+    src: url(../fonts/Caveat-SemiBold.ttf);
+}
+
+
+/* Roots_Colors  */
+
+:root{
+ --bgColor : #F5F5F5;
+ --blueColour : #3C6099;
+ --greenColour : #32CD32;
+}
+
+
+input:-webkit-autofill {
+    box-shadow: 0 0 0 1000px #ffffff inset !important; /* white background */
+    -webkit-text-fill-color: #000 !important; 
+    transition: background-color 5000s ease-in-out 0s;
+  }
+  

@@ -1,0 +1,117 @@
+<%- include('partials/header.ejs') %>
+
+
+<title>SignUp Page</title>
+<link rel="stylesheet" href="/styles/signup.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+<div class="main">
+
+
+
+
+    <div class="colourdiv">
+
+        
+        
+        <div class="title">
+            <h1>Join Thousand of customers preferring <span>Shelf Masters</span></h1>
+        </div>
+        <img src="/images/Oval.png" alt="" id="c1">
+        <div class="semititle">
+            <div class="quotes">
+                <h3>Maximizes Storage Space & Reduces Wastage</h3>
+                <img src="/images/lo'.png" alt="" class="l">
+            </div>
+            
+            <div class="quotes" id="end">
+                <h3>Faster Product Retrieval & Order Fulfillment</h3>
+                <img src="/images/lo'.png" alt="" id="l2" class="l">
+            </div>
+            <div class="quotes">
+                <h3>Handles Real-Time Inventory Updates</h3>
+                <img src="/images/lo'.png" alt="" class="l">
+            </div>
+        </div>
+    </div>
+
+    <div class="textdiv">
+        <div class="logo">
+            <img src="/images/logo.png" alt="">
+        </div>
+        <div class="form">
+            <form action="/" method="POST">
+                <div class="inputForm">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" placeholder=" Name" name="name" required>
+                </div>
+
+                <div class="inputForm">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" placeholder=" Email" name="email" required>
+                </div>
+
+                <div class="inputForm">
+                    <i class="fa-solid fa-lock"></i>
+                    <input  placeholder="Password" name="password" required>
+                </div>
+
+                <div class="inputForm">
+                    <i class="fa-solid fa-building"></i>
+                    <input type="text" placeholder="Company Name" name="companyName" required>
+                </div>
+                <button type="submit"> Sign Up</button>
+            </form>
+        </div>
+        <hr> 
+        <div class="extra">
+            <p>Sign Up Already ? Let's Get Back to Work  ? <a href="/signin">Sign in</a></p>
+        </div>
+    </div>
+
+<% if(sameEmail){  %>
+    <div class="showError">
+        <div class="ib">
+            <i class="fa-sharp fa-solid fa-circle-xmark fa-2xl" style="color: #63E6BE;"></i>
+        </div>
+        <h1>Email Already Exists, please try again.</h1>
+        <h3>Looks like you already have an account with this email.</h3>
+        <button id="ok">Sign In</button>
+    </div>
+
+<% } %>
+
+</div>
+
+
+
+<script>
+    const inputs = document.querySelectorAll('form input');
+  
+    inputs.forEach((input, i) => {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // prevent default submit behavior for control
+      
+      const next = inputs[i + 1];
+      if (next) {
+        next.focus();
+      } else {
+        // If it's the last input, submit the form
+        input.form.submit(); 
+      }
+    }
+  });
+});
+
+
+    const okButton = document.querySelector("#ok");
+    okButton.addEventListener('click',()=>{
+        window.location.href = '/signin';
+    })
+
+
+
+  </script>
+
+<%-include('partials/footer.ejs') %>

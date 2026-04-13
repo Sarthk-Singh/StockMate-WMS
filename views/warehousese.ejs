@@ -1,0 +1,47 @@
+<%- include('partials/header.ejs') %>
+
+<title>Warehouse</title>
+<link rel="stylesheet" href="/styles/common.css">
+<link rel="stylesheet" href="/styles/ware.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+ <div class="title">
+  <div class="back">
+  <a href="/home"><i class="fa-solid fa-arrow-left"></i></a>
+  </div>
+<h1 class="table">List Of Warehouse : </h1>
+
+
+
+</div>
+
+
+
+<div class="newDiv">
+  <% warehouses.forEach(warehouse => { %>
+
+    <div class="warehouse-row">
+      
+      <!-- Warehouse link -->
+      <a href="/manageInv?warehouseName=<%= warehouse.name %>">
+        <%= warehouse.name %> = <span><%= warehouse.usable_space %> sqft</span>
+      </a>
+
+      <!-- Delete button -->
+      <form action="/warehouse/delete/<%= warehouse.id %>" method="POST"
+        onsubmit="return confirm('Delete this warehouse?')">
+      <button class="delete-btn">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+  </form>
+
+
+    </div>
+
+  <% }) %>
+</div>
+
+
+
+<%- include('partials/footer.ejs') %>
+

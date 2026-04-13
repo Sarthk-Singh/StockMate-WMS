@@ -1,0 +1,61 @@
+<!-- views/dashboard.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SmartStock - Dashboard</title>
+  <link rel="stylesheet" href="/styles/dashboard.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>📦 Warehouse Dashboard</h1>
+      <p class="subtitle">Select a warehouse to view live inventory stats</p>
+      <div class="company-badge">Company: <strong><%= company %></strong></div>
+    </header>
+
+    <main class="container">
+      <section class="warehouse-grid">
+        <% if (!warehouses || warehouses.length === 0) { %>
+          <div class="empty-note">No warehouses found for your company.</div>
+        <% } else { %>
+          <% warehouses.forEach(w => { %>
+            <article class="warehouse-card" onclick="loadWarehouse(<%= w.warehouse_id %>)" role="button" tabindex="0">
+              <div class="wc-left">
+                <h3><%= w.name %></h3>
+                <p class="small"><%= w.length %> x <%= w.width %> x <%= w.height %> ft</p>
+                <p class="muted"><%= w.usable_space %> sqft usable</p>
+              </div>
+              <div class="wc-right">
+                <div class="warehouse-cta">Open</div>
+              </div>
+            </article>
+          <% }) %>
+        <% } %>
+      </section>
+
+      <div id="loader" class="overlay-loader" style="display:none;">
+        <div class="loader-box">
+          <div class="loader-bar"></div>
+          <p>⏳ Loading your inventory stats…</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function loadWarehouse(id) {
+      const overlay = document.getElementById('loader');
+      overlay.style.display = 'flex';
+      // small delay for UX so loader can be seen
+      setTimeout(() => window.location.href = '/dashboard/view/' + id, 650);
+    }
+
+    // allow Enter key to activate card
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.activeElement && document.activeElement.classList.contains('warehouse-card')) {
+        document.activeElement.click();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color: #f9f9f9;
+}
+
+.title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.title .back {
+  position: absolute;
+  left: 11%;
+  top: 47%;
+  border: 2px solid var(--blueColour);
+  border-radius: 50%;
+  padding: 0.3rem 0.5rem;
+  background-color: white;
+  transition: all 0.5s;
+}
+
+.title .back a {
+  text-decoration: none;
+  color: black;
+  background-color: white;
+  font-size: 1.5rem;
+  transition: all 0.5s;
+}
+
+
+.table {
+  word-spacing: 0.5rem;
+  font-size: 3.6rem;
+  text-align: center;
+  margin: 3rem 0;
+  color: var(--blueColour);
+  font-family: CaveatMedium;
+  text-shadow: 0 0 black;
+}
+
+
+.newDiv {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 35%;
+  margin: 3rem auto;
+}
+
+.newDiv a {
+  font-family: "InterMedium";
+  background-color: var(--blueColour);
+  color: #e4e4e4;
+  padding: 1rem;
+  font-size: 1.3rem;
+  border-radius: 1rem;
+  cursor: pointer;
+  box-shadow: 0px 0px 0px 0 var(--blueColour);
+  transition: all 0.5s;
+  display: block;
+  transform: scale(1);
+}
+
+.newDiv a:hover{
+transform: scale(1.2);
+box-shadow: 6px 6px 0 0 #123265;
+}
+
+.newDiv a span{
+  color: white;
+}
+
+/* Layout container */
+.warehouse-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+}
+
+/* Delete button */
+.delete-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ff5252;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.25s ease;
+}
+
+/* Hover effect */
+.delete-btn:hover {
+    background: #e64545;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(255, 82, 82, 0.4);
+}
+
+/* Fancy warehouse name styling */
+.warehouse-row a {
+    font-size: 18px;
+    font-weight: 600;
+    color: #34495e;
+    text-decoration: none;
+}
+

@@ -1,0 +1,105 @@
+<!-- views/warehouseView.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= warehouse.name %> — SmartStock</title>
+  <link rel="stylesheet" href="/styles/dashboard.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero hero-small">
+      <h1>📦 <%= warehouse.name %></h1>
+      <p class="subtitle">Snapshot: inventory, space & recent activity</p>
+      <a class="back-link" href="/dashboard">← Back to warehouses</a>
+    </header>
+
+    <main class="container">
+      <!-- Numeric stats -->
+      <section class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Total Items</div>
+          <div class="stat-value"><%= totalItems %></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Unique SKUs</div>
+          <div class="stat-value"><%= uniqueSkus %></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Used Space</div>
+          <div class="stat-value"><%= used %> sqft</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Free Space</div>
+          <div class="stat-value"><%= free %> sqft</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Capacity</div>
+          <div class="stat-value"><%= totalCapacity %> sqft</div>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="chart-row">
+        <div class="chart-card">
+          <h3>Product Quantities</h3>
+          <img src="<%= barUrl %>" alt="Products bar chart" class="chart-img">
+        </div>
+
+        <div class="chart-card">
+          <h3>Space Utilization</h3>
+          <img src="<%= pieUrl %>" alt="Space pie chart" class="chart-img">
+        </div>
+      </section>
+
+      <!-- Item list -->
+      <section>
+        <h2>Inventory Items</h2>
+        <% if (!items || items.length === 0) { %>
+          <div class="empty-note">No items recorded in this warehouse.</div>
+        <% } else { %>
+          <table class="item-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Priority</th>
+                <th>Last Added</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% items.forEach(i => { %>
+                <tr>
+                  <td><%= i.name %></td>
+                  <td><%= i.quantity %></td>
+                  <td><%= i.priority %></td>
+                  <td><%= new Date(i.inserted_at).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </section>
+
+      <!-- Logs -->
+      <section>
+        <h2>Recent Activity</h2>
+        <div class="log-list">
+          <% if (!logs || logs.length === 0) { %>
+            <div class="empty-note">No recent activity.</div>
+          <% } else { %>
+            <% logs.forEach(l => { %>
+              <div class="log-item">
+                <div class="log-left">
+                  <div class="log-action"><%= l.action %></div>
+                  <div class="log-meta"><%= l.item_name || '' %> — <span class="muted"><%= new Date(l.created_at).toLocaleString() %></span></div>
+                </div>
+                <div class="log-right"><%= l.quantity ? ('Qty: ' + l.quantity) : '' %></div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

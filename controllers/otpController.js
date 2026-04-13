@@ -3,7 +3,7 @@ const db = require('../db.js');
 
 const get = (req,res)=>{
      if (!req.session.tempUser || !req.session.tempUser.useremail) {
-    return res.redirect("/"); 
+    return res.redirect("/signup"); 
   }
   let err;
   if(req.session.msg == 1){
@@ -25,7 +25,7 @@ const post = async (req,res)=>{
       "INSERT INTO users (name, email, password, company_name) VALUES ($1, $2, $3, $4)",
       [req.session.tempUser.username, req.session.tempUser.useremail, req.session.tempUser.pass, req.session.tempUser.companyName]
     );
-     res.redirect("/signin");
+     res.redirect("/login");
 
     } catch (error) {
       console.error("Error completing registration:", error);

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StockMate - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#005ac2",
+                        "surface-variant": "#dae2fd",
+                        "surface-container-high": "#e2e7ff",
+                        "on-secondary-fixed-variant": "#304671",
+                        "tertiary": "#924700",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-fixed": "#d8e2ff",
+                        "outline": "#727785",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed": "#311400",
+                        "inverse-surface": "#283044",
+                        "background": "#faf8ff",
+                        "secondary-container": "#b6ccff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-surface": "#131b2e",
+                        "outline-variant": "#c2c6d6",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-highest": "#dae2fd",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#2170e4",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b1c6f9",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "tertiary-container": "#b75b00",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-container": "#405682",
+                        "on-surface-variant": "#424754",
+                        "on-primary-fixed-variant": "#004395",
+                        "on-background": "#131b2e",
+                        "secondary": "#495e8a",
+                        "on-primary-container": "#fefcff",
+                        "inverse-primary": "#adc6ff",
+                        "on-secondary-fixed": "#001a42",
+                        "surface-container": "#eaedff",
+                        "surface-container-low": "#f2f3ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001a42",
+                        "on-primary": "#ffffff",
+                        "primary": "#0058be",
+                        "surface": "#faf8ff",
+                        "surface-bright": "#faf8ff",
+                        "surface-dim": "#d2d9f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .btn-pulse:active {
+            box-shadow: 0 0 0 2px rgba(0, 88, 190, 0.2);
+            transform: scale(0.98);
+        }
+        .micro-gradient-primary {
+            background: linear-gradient(135deg, #0058be 0%, #2170e4 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6 selection:bg-primary-fixed selection:text-on-primary-fixed">
+<div class="w-full max-w-md">
+<!-- Auth Card Shell -->
+<div class="bg-surface-container-lowest rounded-xl p-8 md:p-10 shadow-[0_12px_40px_rgba(19,27,46,0.06)] border border-outline-variant/15">
+<!-- Logo Section -->
+<div class="flex flex-col items-center mb-10">
+<div class="w-14 h-14 micro-gradient-primary rounded-xl flex items-center justify-center mb-4 shadow-sm">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="inventory_2">inventory_2</span>
+</div>
+<h1 class="text-2xl font-extrabold tracking-tight text-on-surface">StockMate</h1>
+<p class="text-sm font-medium text-on-surface-variant mt-1">Smart Storage. Zero Waste.</p>
+</div>
+<!-- Login Form -->
+<form class="space-y-6" onsubmit="return false;">
+<div class="space-y-4">
+<!-- Email Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold uppercase tracking-widest text-on-surface-variant px-1" for="email">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">mail</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant rounded-xl text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" id="email" name="email" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center px-1">
+<label class="text-xs font-bold uppercase tracking-widest text-on-surface-variant" for="password">Password</label>
+<a class="text-xs font-semibold text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">lock</span>
+<input class="w-full pl-10 pr-12 py-3 bg-surface-container-low border border-outline-variant rounded-xl text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full micro-gradient-primary text-on-primary font-bold py-3.5 rounded-xl btn-pulse transition-all shadow-md hover:shadow-lg active:scale-[0.99]" type="submit">
+                    Login
+                </button>
+</form>
+<!-- Secondary Actions -->
+<div class="mt-8 pt-8 border-t border-outline-variant/15 space-y-4">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-surface-container-low text-on-surface font-semibold rounded-xl border border-outline-variant/30 hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+                    View Demo
+                </button>
+<p class="text-center text-sm font-medium text-on-surface-variant">
+                    Don't have an account? 
+                    <a class="text-primary font-bold hover:underline decoration-2 underline-offset-4" href="#">Sign Up</a>
+</p>
+</div>
+</div>
+<!-- Visual Decorative Elements (Asymmetric) -->
+<div class="mt-12 flex justify-between items-center opacity-30 pointer-events-none">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-primary-container border-2 border-white"></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container border-2 border-white"></div>
+<div class="w-8 h-8 rounded-full bg-tertiary-container border-2 border-white"></div>
+</div>
+<div class="text-[10px] font-bold tracking-tighter text-outline uppercase">
+                StockMate v4.2.0 • Editorial Logistics
+            </div>
+</div>
+</div>
+<!-- Background Decorative Visuals -->
+<div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+<!-- Sunken background textural feel -->
+<div class="absolute top-[-10%] right-[-5%] w-[40%] h-[60%] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30%] h-[50%] rounded-full bg-secondary/5 blur-[100px]"></div>
+<!-- Subtle image representation -->
+<div class="absolute bottom-10 right-10 w-64 h-64 rounded-2xl overflow-hidden shadow-2xl opacity-40 rotate-3 border border-white">
+<img alt="Professional warehouse aesthetic" class="w-full h-full object-cover grayscale contrast-125" data-alt="Modern high-tech warehouse interior with organized shelving, soft blue ambient lighting, and clean concrete floors in a minimal editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqU0OQziEW2bNKednOpXDpYdT0izu5dErmHnqhaZ_rA8YcbbXU00qckklBrGbD7CxbYHjgyLhVijUsWtbTMr5n6jFm17JkmJMd_iKxm--ST2T-iwQBMH_1MG5YrMM1QAgI7ly8vDk6xpBvUQdBDCSlfgnpTPmK0d1tsO6ztAhLlSamcPPjjP7BuLFvvy36xd3TQHRPFR4Q24UweQMlDD7NxX_AhZ4hnJWdp258yZY63nsg0NgCUVsRFlQoBCmAgKtSNYbBT-TBb8if"/>
+</div>
+</div>
+</body></html>

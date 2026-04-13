@@ -21,7 +21,7 @@ const post = async (req, res) => {
 
     if (user) {
       req.session.sameEmail = true;
-      return res.redirect("/");
+      return res.redirect("/signup");
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

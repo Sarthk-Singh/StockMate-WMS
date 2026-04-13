@@ -36,100 +36,93 @@
 
   <!-- --------------------------------------------------- -->
 
-  <div class="popupMenu AddItems">
-    <div class="leftSSection">
-      <div class="titlee">
-        <h1>Add Product</h1>
+  <!-- Add Items Modal Overlay -->
+  <div class="modal-overlay" id="addItemsModal">
+    <div class="modal-box">
+      <div class="modal-title">
+        Add Items to Warehouse
+        <button class="close-btn" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="form">
-        <div class="inputs">
-          <label>Product Name:</label>
-          <input type="text" id="ProductName" autocomplete="off"/>
+
+      <form action="/submit-batch" method="POST" id="addForm" onsubmit="return submitSingleBatch();">
+        <input type="hidden" name="products" id="productsData" />
+        
+        <div class="field-group">
+          <label>Product Name</label>
+          <input type="text" id="ProductName" autocomplete="off" required />
         </div>
-        <div class="inputs">
-          <label>Quantity:</label>
-          <input type="number" id="quant" autocomplete="off" />
+
+        <div class="field-group">
+          <label>SKU</label>
+          <input type="text" id="sku" autocomplete="off" />
         </div>
-        <div class="inputs">
-          <label>Size (Volume):</label>
-          <input type="number" id="size" max="<%=capacity %>" autocomplete="off"/>
+
+        <div class="field-group">
+          <label>Category</label>
+          <input type="text" id="category" autocomplete="off" />
         </div>
-        <div class="inputs">
-          <label>Priority:</label>
+
+        <div class="field-group">
+          <label>Quantity</label>
+          <input type="number" id="quant" autocomplete="off" required />
+        </div>
+
+        <div class="field-group">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" step="any" autocomplete="off" required />
+        </div>
+
+        <div class="field-group">
+          <label>Size (sq ft)</label>
+          <input type="number" id="size" step="any" max="<%=capacity %>" autocomplete="off" required />
+        </div>
+
+        <div class="field-group">
+          <label>Priority</label>
           <select id="priority">
             <option value="High">High</option>
             <option value="Normal">Medium</option>
             <option value="Low">Low</option>
           </select>
         </div>
-        <div class="inputs">
-          <label>Weight:</label>
-          <input type="number" id="weight" autocomplete="off"/>
-        </div>
-        <button id="clickme" type="button" onclick="addToList()">
-          Add to List
-        </button>
-      </div>
-    </div>
-    <p id="Note">⚠️ Load Capacity: <%= capacity %> (Do Not Exceed).</p>
-    <div class="rightSection">
-      <h1>
-        <lord-icon
-          src="https://cdn.lordicon.com/slkvcfos.json"
-          trigger="hover"
-          style="width: 50px; height: 50px"
-        >
-        </lord-icon>
-        Product Cart
-      </h1>
 
-
-      
-      <div class="lists" id="productList"></div>
-      <form
-        action="/submit-batch"
-        method="POST"
-        onsubmit="return submitBatch();"
-      >
-        <input type="hidden" name="products" id="productsData" autocomplete="off"/>
-        <button type="submit" class="submit-btn">Submit Products</button>
+        <button type="submit" class="btn-primary">Submit</button>
+        <button type="button" class="btn-secondary" onclick="closeModals()">Cancel</button>
       </form>
     </div>
   </div>
 
-  <div class="popupMenu RetrieveItems">
-    <div class="titlee">
-      <h1>Retrieve Product</h1>
-      <img src="images/arrowBlue.png" alt="" />
+
+  <!-- Retrieve Items Modal Overlay -->
+  <div class="modal-overlay" id="retrieveItemsModal">
+    <div class="modal-box">
+      <div class="modal-title">
+        Retrieve Item
+        <button class="close-btn" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="retrieveForm">
+        <div class="field-group">
+          <label>Product Name or SKU</label>
+          <input type="text" name="productName" placeholder="Enter product name or SKU..." autocomplete="off" required />
+        </div>
+
+        <button type="submit" class="btn-primary">Search</button>
+      </form>
+
+      <!-- Empty State / Result Container -->
+      <div id="retrieveState">
+        <div class="empty-state">
+          Enter a product name or SKU to locate it instantly
+          <span class="small-note">⚡ O(1) Hash Lookup</span>
+        </div>
+      </div>
+
+      <!-- We will inject the result-card into #retrieveState dynamically -->
+
+      <button type="button" class="btn-secondary" onclick="closeModals()">Cancel</button>
     </div>
-
-    <form action="/retrieve-product" method="POST" class="ll">
-      <input
-        type="text"
-        name="productName"
-        placeholder="Enter Product Name"
-        required
-        autocomplete="off"
-      />
-      <input type="text" name="quannn" placeholder="Enter the Quantity" autocomplete="off"/>
-
-      <button id="butto" type="submit">Retrieve Item</button>
-    </form>
   </div>
-
-  <% if (typeof rackName !== 'undefined' && typeof binName !== 'undefined') { %>
-  <div class="popupMenu ProductFound show" id="aa" style="display: flex">
-    <h1>
-      Item is found at <span>Rack <%= rackName %></span> and
-      <span>Bin <%= binName %></span>
-    </h1>
-    <button
-      onclick="document.querySelector('.ProductFound').style.display='none'"
-    >
-      OK
-    </button>
-  </div>
-  <% } %>
 
   <script src="/styles/nn.js"></script>
 

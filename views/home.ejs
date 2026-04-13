@@ -98,7 +98,11 @@
     </div>
     <hr>
     <h2> <i class="fa-regular fa-building" style="color: #03aa54;"></i> <%= cname %></h2>
-    <a href="ok2">Logout</a>
+    <form action="/logout" method="POST" style="margin-top: 15px;">
+      <button type="submit" class="logout-btn" style="background: none; border: none; color: #ff4d4f; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 16px; padding: 0;">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
+    </form>
   </div>
 
   <% } %>

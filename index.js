@@ -9,7 +9,8 @@ const dotenv = require('dotenv').config();
 // Custom Require ------------------------------------------------------------------------------------------------------------
 const db = require('./db.js');
 const mailer = require('./mailer.js');
-const session = require('./session.js');
+const session = require('express-session');
+const { requireAuth } = require('./middleware/auth.js');
 
 // Routes Include ----------------------------------------------------------------------------------------------------
 const signInRoutes = require('./routes/signinroutes.js');
@@ -28,15 +29,21 @@ const dashboardRoutes = require('./routes/dashboardRoutes.js');
 app.use(express.static(path.join(__dirname, "public")));     // Serve /public correctly
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
-app.use(session);
+app.use(session({
+    secret: process.env.SESSION_SECRET || "xyz123secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, maxAge: 86400000 }
+}));
 app.set("views", path.join(__dirname, "views"));
 
 
 // ----------------------------------------------------------------------------------------------
 // AUTH + PRODUCT ROUTES
 // ----------------------------------------------------------------------------------------------
-app.use('/', signUpRoutes);                 // Signup root
-app.use('/signin', signInRoutes);           // Login
+app.get('/', (req, res) => res.redirect('/login'));
+app.use('/signup', signUpRoutes);                 // Signup root
+app.use('/login', signInRoutes);                  // Login
 app.use('/makeInv', makeInv);
 app.use('/verify-otp', verifyOtp);
 app.use('/manageInv', manageInv);
@@ -47,7 +54,7 @@ app.use('/product', productGetter);
 // ----------------------------------------------------------------------------------------------
 // NEW DASHBOARD ROUTES
 // ----------------------------------------------------------------------------------------------
-app.use('/dashboard', dashboardRoutes);
+app.use('/dashboard', requireAuth, dashboardRoutes);
 // Now your dashboard loads the warehouse list page + warehouse view page
 // /dashboard               -> warehouse cards
 // /dashboard/view/:id     -> full fancy dashboard
@@ -83,7 +90,7 @@ app.get("/home", (req, res) => {
 // ----------------------------------------------------------------------------------------------
 // Warehouse Listing (Old Page)
 // ----------------------------------------------------------------------------------------------
-app.get("/warehouse", async (req, res) => {
+app.get("/warehouse", requireAuth, async (req, res) => {
   try {
     const company = req.session.company_name || req.session.companyName;
 
@@ -127,8 +134,30 @@ app.post("/warehouse/delete/:id", async (req, res) => {
 
 
 // Temporary route ----------------------------------------------------------------------------------------------
-app.get("/storage", (req, res) => {
+app.get("/storage", requireAuth, (req, res) => {
   res.render("underConstruction.ejs");
+});
+
+app.get("/inventory", requireAuth, (req, res) => {
+  res.render("underConstruction.ejs");
+});
+
+app.get("/reports", requireAuth, (req, res) => {
+  res.render("underConstruction.ejs");
+});
+
+app.get("/settings", requireAuth, (req, res) => {
+  res.render("underConstruction.ejs");
+});
+
+app.post("/logout", (req, res) => {
+  if (!req.session) return res.redirect('/login');
+  
+  req.session.destroy((err) => {
+    if (err) console.error("Session destruction error:", err);
+    res.clearCookie('connect.sid');
+    res.redirect("/login");
+  });
 });
 
 

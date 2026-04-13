@@ -3,9 +3,10 @@ const db = require('../db.js');
 
 
 function knapsack01(items, capacity) {
+  capacity = Math.floor(capacity);
   const n = items.length;
   const dp = Array.from({ length: n + 1 }, () => Array(capacity + 1).fill(0));
-  const weights = items.map(item => item.size * item.quant);
+  const weights = items.map(item => Math.floor(item.size * item.quant));
   const values = items.map(item => {
     if (item.priority === 'High') return 2;
     if (item.priority === 'Medium') return 1;

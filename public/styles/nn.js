@@ -1,172 +1,161 @@
 // -----------------------------------------------------------------------------
-// Section 1: Popup Toggle Handlers for Add & Retrieve Product
+// Section 1: Modal Handlers (Overlay, ESC, Close Buttons)
 // -----------------------------------------------------------------------------
 
-{/* <script src="https://cdn.lordicon.com/lordicon.js"></script>; */}
+const addItemsModal = document.getElementById("addItemsModal");
+const retrieveItemsModal = document.getElementById("retrieveItemsModal");
+const addButton = document.getElementById("AddProduct");
+const retrieveButton = document.getElementById("RetrieveProduct");
 
-var main = document.querySelector(".main");
-var addButton = document.querySelector("#AddProduct");
-var retrieveButton = document.querySelector("#RetrieveProduct");
-var popUpContentAdd = document.querySelector(".popupMenu");
-var popUpContentRemove = document.querySelector(".RetrieveItems");
-let flag = 0;
-
-// Show Add Product Popup
-addButton.addEventListener("click", (e) => {
-  e.stopPropagation();
-  flag = 1;
-  popUpContentAdd.style.display = "flex";
-  setTimeout(() => {
-    popUpContentAdd.classList.add("show");
-  }, 10);
-});
-
-// Show Retrieve Product Popup
-retrieveButton.addEventListener("click", (e) => {
-  e.stopPropagation();
-  flag = 1;
-  popUpContentRemove.style.display = "flex";
-  setTimeout(() => {
-    popUpContentRemove.classList.add("show");
-  }, 10);
-});
-
-// Hide popups on outside click
-document.addEventListener("click", () => {
-  if (flag === 1) {
-    flag = 0;
-    popUpContentAdd.classList.remove("show");
-    popUpContentRemove.classList.remove("show");
-
-    const productFound = document.querySelector(".ProductFound");
-    if (productFound) {
-      productFound.classList.remove("show");
-      setTimeout(() => (productFound.style.display = "none"), 300);
-    }
-
-    setTimeout(() => {
-      popUpContentAdd.style.display = "none";
-      popUpContentRemove.style.display = "none";
-    }, 300);
-  }
-});
-
-// Prevent click inside popup from closing it
-popUpContentAdd.addEventListener("click", (e) => e.stopPropagation());
-popUpContentRemove.addEventListener("click", (e) => e.stopPropagation());
-
-// -----------------------------------------------------------------------------
-// Section 2: Add Products to List and Render them
-// -----------------------------------------------------------------------------
-
-const products = [];
-
-function addToList() {
-  let nameInput = document.getElementById("ProductName");
-  let quantInput = document.getElementById("quant");
-  let sizeInput = document.getElementById("size");
-  let priorityInput = document.getElementById("priority");
-  let weightInput = document.getElementById("weight");
-
-  let name = nameInput.value;
-  let quant = +quantInput.value;
-  let size = +sizeInput.value;
-  let priority = priorityInput.value;
-  let weight = +weightInput.value;
-
-  if (!name || !quant || !size || !priority || !weight) {
-    alert("Please fill all fields.");
-    return;
-  }
-
-  products.push({ name, quant, size, priority, weight });
-  renderList();
-
-  // Clear input fields
-  nameInput.value = "";
-  quantInput.value = "";
-  sizeInput.value = "";
-  // priorityInput.value = "";
-  weightInput.value = "";
+function openModal(modal) {
+  modal.classList.add("show");
 }
 
-function renderList() {
-  const list = document.getElementById("productList");
-  list.innerHTML = "";
+function closeModals() {
+  if (addItemsModal) {
+    addItemsModal.classList.remove("show");
+    const addForm = document.getElementById("addForm");
+    if(addForm) addForm.reset();
+  }
+  if (retrieveItemsModal) {
+    retrieveItemsModal.classList.remove("show");
+    
+    const retrieveForm = document.getElementById("retrieveForm");
+    if(retrieveForm) retrieveForm.reset();
+    
+    // Reset retrieve state
+    const retrieveState = document.getElementById("retrieveState");
+    if(retrieveState) {
+      retrieveState.innerHTML = `
+        <div class="empty-state">
+          Enter a product name or SKU to locate it instantly
+          <span class="small-note">⚡ O(1) Hash Lookup</span>
+        </div>
+      `;
+    }
+  }
+}
 
-  products.forEach((p, i) => {
-    list.innerHTML += `
-            <div class="product-card">
-                <strong>#${i + 1}</strong> ${p.name} - ${p.quant} pcs
-                <span>(${p.priority})</span>
-                 <lord-icon class = "del-icon"
-    src="https://cdn.lordicon.com/jzinekkv.json"
-    trigger="hover"
-    colors="primary:#c71f16,secondary:#c71f16"
-    style="width:1.5rem;height:1.5rem;margin-left:1rem;cursor:pointer;">
-</lord-icon>
-            </div>
-        `;
+// Open Handlers
+if(addButton) {
+  addButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openModal(addItemsModal);
   });
 }
 
-// -----------------------------------------------------------------------------
-// Section 3: Delete Product from List When Trash Icon Clicked
-// -----------------------------------------------------------------------------
+if(retrieveButton) {
+  retrieveButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openModal(retrieveItemsModal);
+  });
+}
 
-document.getElementById("productList").addEventListener("click", function (e) {
-  if (e.target && e.target.classList.contains("del-icon")) {
-    const card = e.target.closest(".product-card");
-    const index = Array.from(this.children).indexOf(card);
-
-    if (index !== -1) {
-      products.splice(index, 1); // Remove product from array
-      renderList(); // Refresh the product list
+// Close on Overlay Click
+const modals = document.querySelectorAll(".modal-overlay");
+modals.forEach((modal) => {
+  modal.addEventListener("click", (e) => {
+    // Only close if clicking exactly on the overlay background, not the box inside
+    if (e.target === modal) {
+      closeModals();
     }
+  });
+});
+
+// Close on Escape Key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeModals();
   }
 });
 
 // -----------------------------------------------------------------------------
-// Section 4: Submit Products as a Batch
+// Section 2: Submit Add Item (Single Batch)
 // -----------------------------------------------------------------------------
 
-function submitBatch() {
-  if (products.length === 0) {
-    alert("No products to submit.");
+function submitSingleBatch() {
+  const name = document.getElementById("ProductName").value;
+  const quant = document.getElementById("quant").value;
+  const size = document.getElementById("size").value;
+  const priority = document.getElementById("priority").value;
+  const weight = document.getElementById("weight").value;
+  const sku = document.getElementById("sku").value; // Used in UI only if backend unsupported
+  const category = document.getElementById("category").value; // Used in UI only if backend unsupported
+
+  if (!name || !quant || !size || !priority || !weight) {
+    alert("Please fill all required fields.");
     return false;
   }
 
-  document.getElementById("productsData").value = JSON.stringify(products);
+  // Formatting as batch of 1 product to securely match the backend's existing payload expectation
+  const productArr = [{ name, quant: +quant, size: +size, priority, weight: +weight, sku, category }];
+  
+  document.getElementById("productsData").value = JSON.stringify(productArr);
   return true;
 }
 
 // -----------------------------------------------------------------------------
-// Section 5: Retrieve Product from Backend
+// Section 3: Retrieve Product API Request
 // -----------------------------------------------------------------------------
 
-document
-  .getElementById("retrieveForm")
-  .addEventListener("submit", async function (e) {
+const retrieveForm = document.getElementById("retrieveForm");
+if(retrieveForm) {
+  retrieveForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const form = e.target;
+    // Check for FormData availability bounds
     const data = new FormData(form);
     const productName = data.get("productName");
 
-    const res = await fetch("/retrieve-product", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productName }),
-    });
+    try {
+      const res = await fetch("/retrieve-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productName }),
+      });
 
-    const result = await res.json();
-    const resultDiv = document.getElementById("productResult");
+      const result = await res.json();
+      const retrieveState = document.getElementById("retrieveState");
 
-    if (result.success) {
-      resultDiv.innerHTML = `
-            <h1>Item is Found at <span>Rack ${result.rackName}</span> and <span>Bin: ${result.binName}</span></h1>
+      if (result.success) {
+        // Build the dynamic result card per user spec
+        retrieveState.innerHTML = `
+          <div class="result-card" style="display:block;">
+            <div style="margin-bottom:8px;">
+              <strong>${productName}</strong> 
+              <span class="badge" style="background:${
+                  result.priority === 'High' ? '#ef4444' : 
+                  result.priority === 'Normal' || result.priority === 'Medium' ? '#f59e0b' : '#378ADD'
+              }">${result.priority || "High"}</span>
+            </div>
+            
+            <table style="width:100%; font-size:13px; color:#64748b;">
+               <tr>
+                 <td style="padding:4px 0;"><strong>Rack No:</strong> ${result.rackName || "N/A"}</td>
+                 <td style="padding:4px 0;"><strong>Bin No:</strong> ${result.binName || "N/A"}</td>
+               </tr>
+               <tr>
+                 <td style="padding:4px 0;"><strong>Quantity:</strong> ${result.quant || "-"}</td>
+                 <td style="padding:4px 0;"><strong>Weight:</strong> ${result.weight || "-"} kg</td>
+               </tr>
+            </table>
+          </div>
         `;
-    } else {
-      resultDiv.innerHTML = `<h1>${result.message}</h1>`;
+      } else {
+        retrieveState.innerHTML = `
+          <div class="result-card" style="display:block; border-color:#ef4444; background-color:#fef2f2;">
+             <strong style="color:#ef4444;">${result.message || "Product not found"}</strong>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error("Retrieval error:", err);
+      document.getElementById("retrieveState").innerHTML = `
+          <div class="result-card" style="display:block; border-color:#ef4444; background-color:#fef2f2;">
+             <strong style="color:#ef4444;">Network error while querying layout</strong>
+          </div>
+        `;
     }
   });
+}

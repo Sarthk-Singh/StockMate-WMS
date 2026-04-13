@@ -58,3 +58,19 @@ CREATE TABLE products (
     rack_id INTEGER NOT NULL REFERENCES racks(rack_id) ON DELETE CASCADE,
     inserted_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+
+CREATE TABLE activity_logs (
+    id SERIAL PRIMARY KEY,
+    warehouse_id INT REFERENCES warehouse(warehouse_id) ON DELETE CASCADE,
+    action TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

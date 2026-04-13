@@ -3,6 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="/styles/common.css" />
-
-
+    <!-- Tailwind CSS with specific plugins for form enhancements and Container Queries -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "media",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#ec4899",
+                        "surface-variant": "#f4f4f5",
+                        "surface-container-high": "#e4e4e7",
+                        "on-secondary-fixed-variant": "#18181b",
+                        "error": "#ef4444",
+                        "inverse-on-surface": "#fafafa",
+                        "secondary-fixed": "#fdf2f8",
+                        "outline": "#a1a1aa",
+                        "error-container": "#fee2e2",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#27272a",
+                        "background": "#fafafa",
+                        "secondary-container": "#fce7f3",
+                        "primary-fixed-dim": "#f472b6",
+                        "on-surface": "#18181b",
+                        "outline-variant": "#d4d4d8",
+                        "primary-fixed": "#fce7f3",
+                        "surface-container-highest": "#f4f4f5",
+                        "on-error-container": "#7f1d1d",
+                        "primary-container": "#fbcfe8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#f9a8d4",
+                        "on-secondary-container": "#831843",
+                        "on-surface-variant": "#3f3f46",
+                        "on-primary-fixed-variant": "#db2777",
+                        "on-background": "#18181b",
+                        "secondary": "#db2777",
+                        "on-primary-container": "#831843",
+                        "inverse-primary": "#fbcfe8",
+                        "on-secondary-fixed": "#500724",
+                        "surface-container": "#ffffff",
+                        "surface-container-low": "#fafafa",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#500724",
+                        "on-primary": "#ffffff",
+                        "primary": "#ec4899",
+                        "surface": "#ffffff",
+                        "surface-bright": "#ffffff",
+                        "surface-dim": "#f4f4f5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .btn-pulse:active {
+            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
+            transform: scale(0.98);
+        }
+        .micro-gradient-primary {
+            background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+        }
+    </style>
+</head>
+<!-- Replaced text-on-surface ensuring global text is readable on light -->
+<body class="bg-surface text-on-surface min-h-screen">

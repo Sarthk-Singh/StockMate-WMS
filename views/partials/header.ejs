@@ -3,84 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CSS with specific plugins for form enhancements and Container Queries -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "media",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface-tint": "#ec4899",
-                        "surface-variant": "#f4f4f5",
-                        "surface-container-high": "#e4e4e7",
-                        "on-secondary-fixed-variant": "#18181b",
-                        "error": "#ef4444",
-                        "inverse-on-surface": "#fafafa",
-                        "secondary-fixed": "#fdf2f8",
-                        "outline": "#a1a1aa",
-                        "error-container": "#fee2e2",
-                        "surface-container-lowest": "#ffffff",
-                        "inverse-surface": "#27272a",
-                        "background": "#fafafa",
-                        "secondary-container": "#fce7f3",
-                        "primary-fixed-dim": "#f472b6",
-                        "on-surface": "#18181b",
-                        "outline-variant": "#d4d4d8",
-                        "primary-fixed": "#fce7f3",
-                        "surface-container-highest": "#f4f4f5",
-                        "on-error-container": "#7f1d1d",
-                        "primary-container": "#fbcfe8",
-                        "on-error": "#ffffff",
-                        "secondary-fixed-dim": "#f9a8d4",
-                        "on-secondary-container": "#831843",
-                        "on-surface-variant": "#3f3f46",
-                        "on-primary-fixed-variant": "#db2777",
-                        "on-background": "#18181b",
-                        "secondary": "#db2777",
-                        "on-primary-container": "#831843",
-                        "inverse-primary": "#fbcfe8",
-                        "on-secondary-fixed": "#500724",
-                        "surface-container": "#ffffff",
-                        "surface-container-low": "#fafafa",
-                        "on-secondary": "#ffffff",
-                        "on-primary-fixed": "#500724",
-                        "on-primary": "#ffffff",
-                        "primary": "#ec4899",
-                        "surface": "#ffffff",
-                        "surface-bright": "#ffffff",
-                        "surface-dim": "#f4f4f5"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "fontFamily": {
-                        "headline": ["Inter"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    }
-                },
-            },
-        }
-    </script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .btn-pulse:active {
-            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
-            transform: scale(0.98);
-        }
-        .micro-gradient-primary {
-            background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
-        }
-    </style>
+    <title>StockMate</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="/styles/common.css" />
 </head>
-<!-- Replaced text-on-surface ensuring global text is readable on light -->
-<body class="bg-surface text-on-surface min-h-screen">
+<body>
+
+<nav class="saas-navbar">
+    <div class="nav-left">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="24" height="24" rx="6" fill="#378ADD"/>
+                <path d="M12 5L5 9V15L12 19L19 15V9L12 5Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 9L12 13L19 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 19V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="brand-name">StockMate</span>
+        </div>
+    </div>
+    
+    <div class="nav-center">
+        <a href="/dashboard" class="nav-link" id="nav-dashboard">Dashboard</a>
+        <a href="/product" class="nav-link" id="nav-inventory">Inventory</a>
+        <a href="/warehouse" class="nav-link" id="nav-warehouse">Warehouse</a>
+        <a href="/settings" class="nav-link" id="nav-settings">Settings</a>
+    </div>
+
+    <div class="nav-right">
+        <div class="avatar-circle">
+            SM
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Simple script to highlight active nav
+    const path = window.location.pathname;
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if(link.getAttribute('href') === path || 
+          (path.startsWith('/makeInv') && link.getAttribute('id') === 'nav-warehouse') || 
+          (path.startsWith('/managingInv') && link.getAttribute('id') === 'nav-inventory')) {
+            link.classList.add('active');
+        }
+    });
+
+    // Temp logic: redirect /settings to somewhere generic since it may not exist yet
+    // Avatar click temp listener
+    document.querySelector('.avatar-circle').addEventListener('click', () => {
+        window.location.href = "/settings";
+    });
+</script>

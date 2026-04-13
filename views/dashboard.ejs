@@ -1,61 +1,300 @@
-<!-- views/dashboard.ejs -->
-<!DOCTYPE html>
-<html>
-<head>
-  <title>SmartStock - Dashboard</title>
-  <link rel="stylesheet" href="/styles/dashboard.css">
-</head>
-<body>
-  <div class="page">
-    <header class="hero">
-      <h1>📦 Warehouse Dashboard</h1>
-      <p class="subtitle">Select a warehouse to view live inventory stats</p>
-      <div class="company-badge">Company: <strong><%= company %></strong></div>
-    </header>
+<%- include('partials/header.ejs') %>
+<title>Dashboard | StockMate</title>
+<style>
+/* Dashboard Specific Layout Details */
+.dashboard-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
 
-    <main class="container">
-      <section class="warehouse-grid">
-        <% if (!warehouses || warehouses.length === 0) { %>
-          <div class="empty-note">No warehouses found for your company.</div>
-        <% } else { %>
-          <% warehouses.forEach(w => { %>
-            <article class="warehouse-card" onclick="loadWarehouse(<%= w.warehouse_id %>)" role="button" tabindex="0">
-              <div class="wc-left">
-                <h3><%= w.name %></h3>
-                <p class="small"><%= w.length %> x <%= w.width %> x <%= w.height %> ft</p>
-                <p class="muted"><%= w.usable_space %> sqft usable</p>
-              </div>
-              <div class="wc-right">
-                <div class="warehouse-cta">Open</div>
-              </div>
-            </article>
-          <% }) %>
-        <% } %>
-      </section>
+.hero-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.hero-greeting {
+    font-size: 24px;
+    font-weight: 500;
+}
+.hero-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.hero-actions {
+    display: flex;
+    gap: 12px;
+}
 
-      <div id="loader" class="overlay-loader" style="display:none;">
-        <div class="loader-box">
-          <div class="loader-bar"></div>
-          <p>⏳ Loading your inventory stats…</p>
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.kpi-card {
+    padding: 1rem;
+}
+.kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.kpi-value {
+    font-size: 24px;
+    font-weight: 500;
+}
+.kpi-indicator {
+    font-size: 12px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.indicator-positive { color: var(--success); }
+.indicator-warning { color: var(--warning); }
+
+.middle-split {
+    display: grid;
+    grid-template-columns: 3fr 2fr; /* 60/40 Split */
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.feed-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.feed-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.feed-dot {
+    margin-top: 4px;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-accent);
+    border-radius: 50%;
+}
+.feed-text { font-size: 14px; color: var(--text-primary); }
+.feed-time { font-size: 12px; color: var(--text-muted); }
+
+.capacity-bar-wrap {
+    margin-bottom: 1.5rem;
+}
+.cap-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+.cap-track {
+    width: 100%;
+    height: 8px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.cap-fill {
+    height: 100%;
+    background-color: var(--primary-accent);
+    width: 65%; /* Dummy data */
+    border-radius: 4px;
+}
+
+.low-stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ls-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.ls-badge {
+    background-color: #fef3c7;
+    color: var(--warning);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.quick-actions-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.action-card {
+    cursor: pointer;
+    transition: transform 150ms ease, border-color 150ms ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.action-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+.action-icon {
+    font-size: 20px;
+    color: var(--primary-accent);
+    margin-bottom: 4px;
+}
+.action-title {
+    font-weight: 500;
+    font-size: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+.action-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.action-arrow { color: #cbd5e1; }
+</style>
+
+<div class="dashboard-container">
+    <div class="hero-section">
+        <div>
+            <!-- Fallback to "User" if res.locals/req.session not specifically parsed -->
+            <h1 class="hero-greeting">Good morning, <%= typeof name !== 'undefined' ? name : 'Sarthak' %></h1>
+            <p class="hero-subtitle">Here's what's happening in your warehouse today.</p>
         </div>
-      </div>
-    </main>
-  </div>
+        <div class="hero-actions">
+            <!-- Modal Triggers from Inventory View -->
+            <button class="btn-primary" onclick="window.location.href='/product'">Add Product</button>
+            <button class="btn-outlined">Import CSV</button>
+        </div>
+    </div>
 
-  <script>
-    function loadWarehouse(id) {
-      const overlay = document.getElementById('loader');
-      overlay.style.display = 'flex';
-      // small delay for UX so loader can be seen
-      setTimeout(() => window.location.href = '/dashboard/view/' + id, 650);
-    }
+    <div class="kpi-grid">
+        <div class="card kpi-card">
+            <div class="kpi-label">Total Products</div>
+            <div class="kpi-value">1,248</div>
+            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-arrow-trend-up"></i> +12% this week</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-label">Space Utilized</div>
+            <div class="kpi-value">64%</div>
+            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-warehouse"></i> Healthy</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-label">Low Stock Alerts</div>
+            <div class="kpi-value">8</div>
+            <div class="kpi-indicator indicator-warning"><i class="fa-solid fa-triangle-exclamation"></i> Requires attention</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-label">Active Bins</div>
+            <div class="kpi-value">340</div>
+            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-boxes-stacked"></i> 82 free bins</div>
+        </div>
+    </div>
 
-    // allow Enter key to activate card
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && document.activeElement && document.activeElement.classList.contains('warehouse-card')) {
-        document.activeElement.click();
-      }
-    });
-  </script>
+    <div class="middle-split">
+        <div class="card">
+            <div class="section-title">Recent Activity</div>
+            <ul class="feed-list">
+                <li class="feed-item">
+                    <div class="feed-dot"></div>
+                    <div>
+                        <div class="feed-text">Product added (SKU: APPL-12X)</div>
+                        <div class="feed-time">10 minutes ago</div>
+                    </div>
+                </li>
+                <li class="feed-item">
+                    <div class="feed-dot" style="background:var(--success)"></div>
+                    <div>
+                        <div class="feed-text">Reorganized Rack A2 utilizing Knapsack</div>
+                        <div class="feed-time">45 minutes ago</div>
+                    </div>
+                </li>
+                <li class="feed-item">
+                    <div class="feed-dot" style="background:#cbd5e1"></div>
+                    <div>
+                        <div class="feed-text">CSV Import complete (42 items)</div>
+                        <div class="feed-time">2 hours ago</div>
+                    </div>
+                </li>
+                <li class="feed-item">
+                    <div class="feed-dot" style="background:var(--warning)"></div>
+                    <div>
+                        <div class="feed-text">Stock alert for 'Copper Tubing'</div>
+                        <div class="feed-time">Yesterday</div>
+                    </div>
+                </li>
+            </ul>
+            <a href="#" style="display:block; margin-top:20px; font-size:13px; color:var(--primary-accent);">View all activity &rarr;</a>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Quick Stats</div>
+            
+            <div class="capacity-bar-wrap">
+                <div class="cap-title">
+                    <span>Warehouse Capacity</span>
+                    <strong>65%</strong>
+                </div>
+                <div class="cap-track">
+                    <div class="cap-fill"></div>
+                </div>
+            </div>
+
+            <div class="cap-title" style="margin-top:2rem;">
+                <span>Low Stock Items</span>
+            </div>
+            <div class="low-stock-list">
+                <div class="ls-item">
+                    <span style="font-size:14px;">Lithium Cells</span>
+                    <span class="ls-badge">5 left</span>
+                </div>
+                <div class="ls-item">
+                    <span style="font-size:14px;">Steel Bearings</span>
+                    <span class="ls-badge">12 left</span>
+                </div>
+                <div class="ls-item">
+                    <span style="font-size:14px;">Cardboard Pkg</span>
+                    <span class="ls-badge">40 left</span>
+                </div>
+            </div>
+            <a href="/product" style="display:block; margin-top:16px; font-size:13px; color:var(--primary-accent);">View all inventory &rarr;</a>
+        </div>
+    </div>
+
+    <div class="quick-actions-row">
+        <div class="card action-card" onclick="window.location.href='/product'">
+            <div class="action-icon"><i class="fa-solid fa-plus-circle"></i></div>
+            <div class="action-title">Add New Product <span class="action-arrow">&rarr;</span></div>
+            <div class="action-desc">Log incoming inventory using predictive capacity algos.</div>
+        </div>
+        <div class="card action-card" onclick="window.location.href='/product'">
+            <div class="action-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <div class="action-title">Search Product <span class="action-arrow">&rarr;</span></div>
+            <div class="action-desc">O(1) Hash lookups to locate items physically within seconds.</div>
+        </div>
+        <div class="card action-card" onclick="window.location.href='/warehouse'">
+            <div class="action-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div class="action-title">Reorganize Bins <span class="action-arrow">&rarr;</span></div>
+            <div class="action-desc">Optimize spatial distribution inside existing hardware.</div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -41,7 +41,7 @@ app.set("views", path.join(__dirname, "views"));
 // ----------------------------------------------------------------------------------------------
 // AUTH + PRODUCT ROUTES
 // ----------------------------------------------------------------------------------------------
-app.get('/', (req, res) => res.redirect('/login'));
+app.get('/', (req, res) => res.redirect('/dashboard'));
 app.use('/signup', signUpRoutes);                 // Signup root
 app.use('/login', signInRoutes);                  // Login
 app.use('/makeInv', makeInv);
@@ -49,7 +49,7 @@ app.use('/verify-otp', verifyOtp);
 app.use('/manageInv', manageInv);
 app.use('/submit-batch', addingProduct);
 app.use('/retrieve-product', retrieveProduct);
-app.use('/product', productGetter);
+app.use('/product', requireAuth, productGetter);
 
 // ----------------------------------------------------------------------------------------------
 // NEW DASHBOARD ROUTES
@@ -58,34 +58,6 @@ app.use('/dashboard', requireAuth, dashboardRoutes);
 // Now your dashboard loads the warehouse list page + warehouse view page
 // /dashboard               -> warehouse cards
 // /dashboard/view/:id     -> full fancy dashboard
-
-
-// ----------------------------------------------------------------------------------------------
-// Home Route 
-// ----------------------------------------------------------------------------------------------
-app.get("/home", (req, res) => {
-
-  // Fix session company name key
-  const cname = req.session.company_name || req.session.companyName;
-
-  const addedProduct = req.session.addedProduct || false;
-  const warehouseMsg = req.session.warehouseMsg || false;
-  req.session.warehouseMsg = null;
-  req.session.addedProduct = null;
-
-  res.render("home", {
-    addedProduct,
-    warehouseMsg,
-    name: req.session.name,
-    email: req.session.email,
-    cname,
-    rack: req.session.rackId,
-    bin: req.session.BinId
-  });
-
-  console.log("warehouseMsg:", req.session.warehouseMsg, "addedProduct:", req.session.addedProduct);
-});
-
 
 // ----------------------------------------------------------------------------------------------
 // Warehouse Listing (Old Page)
@@ -147,7 +119,10 @@ app.get("/reports", requireAuth, (req, res) => {
 });
 
 app.get("/settings", requireAuth, (req, res) => {
-  res.render("underConstruction.ejs");
+  res.render("settings", { 
+      name: req.session.name || "Sarthak", 
+      email: req.session.email || "sarthak@stockmate.com" 
+  });
 });
 
 app.post("/logout", (req, res) => {

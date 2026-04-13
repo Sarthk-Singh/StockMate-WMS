@@ -40,7 +40,7 @@ const post = async (req,res)=>{
         req.session.companyName = user.company_name;   // keep old one
         req.session.company_name = user.company_name;  // NEW REQUIRED ONE
     
-        res.redirect("/home");
+        res.redirect("/dashboard");
       } catch (err) {
         console.log(err);
         res.status(500).send("Internal Server Error");

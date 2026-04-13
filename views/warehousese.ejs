@@ -1,47 +1,354 @@
 <%- include('partials/header.ejs') %>
+<title>Warehouse Layouts | StockMate</title>
+<style>
+/* Warehouse & Bin Management Specific Styles */
+.wh-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
 
-<title>Warehouse</title>
-<link rel="stylesheet" href="/styles/common.css">
-<link rel="stylesheet" href="/styles/ware.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
 
- <div class="title">
-  <div class="back">
-  <a href="/home"><i class="fa-solid fa-arrow-left"></i></a>
-  </div>
-<h1 class="table">List Of Warehouse : </h1>
+/* Warehouse Cards Grid */
+.wh-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
 
+.wh-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+.wh-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+.wh-title {
+    font-size: 18px;
+    font-weight: 500;
+}
+.wh-location {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+.wh-menu button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+}
+.wh-menu button.del:hover {
+    color: var(--danger);
+}
 
+.progress-wrap {
+    margin: 1.5rem 0;
+}
+.progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+.fill-safe { background-color: var(--success); }
+.fill-warn { background-color: var(--warning); }
+.fill-danger { background-color: var(--danger); }
 
-</div>
+/* Bin Expansion System */
+details.rack-details {
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+summary.rack-summary {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+summary.rack-summary::-webkit-details-marker { display: none; }
+.rack-content {
+    background: #ffffff;
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+.bin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border: 1px solid #f1f5f9;
+    border-radius: 6px;
+}
+.bin-info strong {
+    font-size: 14px;
+    display: block;
+}
+.bin-info span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.mini-progress-track {
+    width: 100px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin: 0 16px;
+}
+.mini-progress-fill {
+    height: 100%;
+    background: var(--primary-accent);
+}
 
+/* Calculator Panel */
+.calc-panel {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.calc-output {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.calc-val {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--primary-accent);
+}
 
+</style>
 
-<div class="newDiv">
-  <% warehouses.forEach(warehouse => { %>
-
-    <div class="warehouse-row">
-      
-      <!-- Warehouse link -->
-      <a href="/manageInv?warehouseName=<%= warehouse.name %>">
-        <%= warehouse.name %> = <span><%= warehouse.usable_space %> sqft</span>
-      </a>
-
-      <!-- Delete button -->
-      <form action="/warehouse/delete/<%= warehouse.id %>" method="POST"
-        onsubmit="return confirm('Delete this warehouse?')">
-      <button class="delete-btn">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-  </form>
-
-
+<div class="wh-container">
+    <div class="page-header">
+        <div class="page-title">Warehouse Layouts</div>
+        <button class="btn-primary" onclick="openWhModal()">Add New Warehouse</button>
     </div>
 
-  <% }) %>
+    <!-- Warehouse Cards Grid -->
+    <div class="wh-grid">
+        <% 
+           if(typeof warehouses !== 'undefined' && warehouses.length > 0) {
+           warehouses.forEach(w => { 
+                // Dummy load % since db only holds usable_space currently
+                let load = Math.floor(Math.random() * 90) + 10; 
+                let loadClass = load > 85 ? 'fill-danger' : (load > 60 ? 'fill-warn' : 'fill-safe');
+        %>
+        <div class="wh-card">
+            <div class="wh-card-header">
+                <div>
+                    <div class="wh-title"><%= w.name %></div>
+                    <div class="wh-location"><i class="fa-solid fa-location-dot"></i> HQ Facility</div>
+                </div>
+                <div class="wh-menu">
+                    <form action="/warehouse/delete/<%= w.id %>" method="POST" onsubmit="return confirm('Delete this warehouse?')" style="display:inline;">
+                        <button type="submit" class="del" title="Delete Warehouse"><i class="fa-regular fa-trash-can"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="progress-wrap">
+                <div class="progress-meta">
+                    <span><strong><%= load %>%</strong> Full</span>
+                    <span><%= Math.floor((w.usable_space || 1000) * (1 - (load/100))) %> sqft available</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill <%= loadClass %>" style="width: <%= load %>%;"></div>
+                </div>
+            </div>
+
+            <button class="btn-outlined" style="width:100%;" onclick="window.location.href='/manageInv?warehouseName=<%= w.name %>'">
+                View & Manage Inventory
+            </button>
+
+            <!-- Expanded Details Example HTML directly embedded -->
+            <details class="rack-details">
+                <summary class="rack-summary">
+                    Rack Sector A <i class="fa-solid fa-chevron-down" style="font-size:12px; color:var(--text-muted)"></i>
+                </summary>
+                <div class="rack-content">
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn-outlined" style="padding: 4px 10px; font-size:12px;">Reorganize Rack</button>
+                    </div>
+                    <!-- Bin Data -->
+                    <div class="bin-item">
+                        <div class="bin-info">
+                            <strong>Bin 01</strong>
+                            <span>Mixed Electronics</span>
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            <span style="font-size:12px; font-weight:500;">80%</span>
+                            <div class="mini-progress-track"><div class="mini-progress-fill" style="width:80%;"></div></div>
+                            <button class="btn-outlined" style="padding:4px 8px; font-size:12px; color:var(--primary-accent); border:none;">Details</button>
+                        </div>
+                    </div>
+                    <div class="bin-item">
+                        <div class="bin-info">
+                            <strong>Bin 02</strong>
+                            <span>Packaging</span>
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            <span style="font-size:12px; font-weight:500;">22%</span>
+                            <div class="mini-progress-track"><div class="mini-progress-fill" style="width:22%; background:var(--success);"></div></div>
+                            <button class="btn-outlined" style="padding:4px 8px; font-size:12px; color:var(--primary-accent); border:none;">Details</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+        <% }) } else { %>
+            <div style="grid-column: span 2; text-align:center; padding: 4rem; color: var(--text-muted); background:var(--bg-card); border-radius:12px; border:1px solid var(--border-color);">
+                No warehouses established. Click "Add New Warehouse" to begin tracking physical coordinates.
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Space Calculator Panel -->
+    <div class="page-title" style="margin-bottom:1rem;">Usable Space Calculator</div>
+    <div class="calc-panel">
+        <div class="calc-grid">
+            <div class="form-group">
+                <label>Warehouse Width (ft)</label>
+                <input type="number" class="form-input calc-in" id="cw" value="100">
+            </div>
+            <div class="form-group">
+                <label>Warehouse Length (ft)</label>
+                <input type="number" class="form-input calc-in" id="cl" value="50">
+            </div>
+            <div class="form-group">
+                <label>Clear Height (ft)</label>
+                <input type="number" class="form-input calc-in" id="ch" value="30">
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <button class="btn-primary" onclick="runCalc()">Calculate Space</button>
+        </div>
+        <div class="calc-output">
+            <span style="font-size:14px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Estimated Usable Capacity</span>
+            <div class="calc-val" id="c-res-sqft">5,000 sq ft</div>
+            <div style="font-size:15px; color:var(--text-primary); margin-top:8px;">Approximately physical bounds for <strong id="c-res-bins" style="color:var(--primary-accent)">320</strong> automated bins.</div>
+        </div>
+    </div>
 </div>
 
+<!-- Add Warehouse Modal -->
+<div class="modal-overlay" id="whModal">
+    <div class="modal-box">
+      <div class="modal-title">
+        Add New Warehouse
+        <button class="modal-close" onclick="closeWhModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
 
+      <form action="/makeInv" method="POST" id="whForm">
+        <div class="form-group">
+            <label>Warehouse Name / ID</label>
+            <input type="text" name="warehouseName" class="form-input" required>
+        </div>
+        <div class="form-group">
+            <label>Geographic Location</label>
+            <input type="text" class="form-input" placeholder="e.g. Sector 7G">
+        </div>
 
-<%- include('partials/footer.ejs') %>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+                <label>Width (m)</label>
+                <input type="number" name="wRow" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Length (m)</label>
+                <input type="number" name="wCol" class="form-input" required>
+            </div>
+        </div>
 
+        <div class="form-group">
+            <label>Ceiling Height (m)</label>
+            <input type="number" name="wHei" class="form-input" required>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width:100%;">Establish Infrastructure</button>
+        <button type="button" class="btn-outlined" onclick="closeWhModal()" style="width:100%; margin-top:12px;">Cancel</button>
+      </form>
+    </div>
+</div>
+
+<script>
+    // Calculator Mechanics
+    function runCalc() {
+        const w = parseFloat(document.getElementById('cw').value) || 0;
+        const l = parseFloat(document.getElementById('cl').value) || 0;
+        const h = parseFloat(document.getElementById('ch').value) || 0;
+        
+        const squareFootage = w * l;
+        const volume = squareFootage * h; 
+        const estimatedBins = Math.floor(volume / 400); // Dummy ratio
+
+        document.getElementById('c-res-sqft').innerText = squareFootage.toLocaleString() + " sq ft";
+        document.getElementById('c-res-bins').innerText = estimatedBins.toLocaleString();
+    }
+
+    // Modal Mechanics
+    const m = document.getElementById('whModal');
+    function openWhModal() { m.classList.add('show'); }
+    function closeWhModal() { 
+        m.classList.remove('show'); 
+        document.getElementById('whForm').reset();
+    }
+
+    m.addEventListener('click', e => { if(e.target === m) closeWhModal(); });
+    document.addEventListener("keydown", e => { if(e.key === "Escape") closeWhModal(); });
+</script>
+
+</body>
+</html>

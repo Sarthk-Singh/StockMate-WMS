@@ -1,78 +1,394 @@
 <%- include('partials/header.ejs') %>
+<title>Inventory | StockMate</title>
+<style>
+/* Inventory Page Styles */
+.inventory-container {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Product List</title>
-  <link rel="stylesheet" href="/styles/products.css">
-  <link rel="stylesheet" href="/css/productList.css">
-  <style>
-    #search {
-      margin: 20px;
-      padding: 10px;
-      width: 300px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-  </style>
-</head>
-<body>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.page-title {
+    font-size: 20px;
+    font-weight: 500;
+}
 
-  <h1>Product List</h1>
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+.toolbar-left {
+    display: flex;
+    gap: 12px;
+    flex-grow: 1;
+}
+.search-wrapper {
+    position: relative;
+    width: 320px;
+}
+.search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+}
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+}
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    background: #fff;
+    cursor: pointer;
+}
 
-  <input type="text" id="search" placeholder="Search by any field...">
-  <table>
-    <thead>
-      <tr>
-        <th>Product ID</th>
-        <th>Name</th>
-        <th>Rack ID</th>
-        <th>Bin ID</th>
-        <th>Quantity</th>
-        <th>Priority</th>
-      </tr>
-    </thead>
-    <tbody id="productTable">
-      <% products
-          .sort((a, b) => {
-            const priorityOrder = { High: 1, Medium: 2, Low: 3 };
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          })
-          .forEach(product => { %>
-        <tr>
-          <td><%= product.product_id %></td>
-          <td><%= product.name %></td>
-          <td><%= product.rack_id %></td>
-          <td><%= product.bin_id %></td>
-          <td><%= product.quantity %></td>
-          <td><%= product.priority %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+.optimize-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #fdf2f8; /* Soft pink/purple for algos */
+    color: #db2777;
+    border: 1px solid #fbcfe8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    transition: all 150ms ease;
+}
+.optimize-btn:hover {
+    background-color: #fce7f3;
+}
 
-  <!-- Search Filter Script -->
-  <script>
+/* Table Design */
+.table-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    background-color: #f8fafc;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 13px;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+td {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+tbody tr {
+    transition: background-color 150ms ease;
+}
+tbody tr:hover {
+    background-color: #f8fafc;
+}
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Priority Badges */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+.badge-high {
+    background-color: #fef2f2;
+    color: var(--danger);
+}
+.badge-medium {
+    background-color: #fffbeb;
+    color: var(--warning);
+}
+.badge-low {
+    background-color: #f0fdf4;
+    color: var(--success);
+}
+
+.action-row button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-right: 8px;
+    transition: color 150ms ease;
+}
+.action-row button:hover {
+    color: var(--primary-accent);
+}
+.action-row button.del:hover {
+    color: var(--danger);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+.page-ctrls button {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.page-ctrls button:hover {
+    background: #f8fafc;
+}
+
+</style>
+
+<div class="inventory-container">
+    <div class="page-header">
+        <div class="page-title">Inventory</div>
+    </div>
+
+    <!-- Optimization AI Hook -->
+    <button class="optimize-btn">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> 
+        Run Knapsack Algorithm to reallocate stock
+    </button>
+
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" class="search-input" id="search" placeholder="Search by Product Name or SKU (O(1) Hash)">
+            </div>
+            <select class="filter-select">
+                <option value="">Category: All</option>
+                <option value="hardware">Hardware</option>
+                <option value="software">Electronics</option>
+                <option value="raw">Raw Materials</option>
+            </select>
+            <select class="filter-select">
+                <option value="">Priority: All</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <select class="filter-select">
+                <option value="">Stock: All</option>
+                <option value="in">In Stock</option>
+                <option value="low">Low Stock</option>
+            </select>
+        </div>
+        <div class="toolbar-right" style="display:flex; gap:12px;">
+            <button class="btn-outlined">Import CSV</button>
+            <button class="btn-primary" onclick="openAddModal()">Add Product</button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Priority</th>
+                    <th>Bin Location</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="productTable">
+                <% 
+                   if (typeof products !== 'undefined' && products.length > 0) {
+                   products
+                    .sort((a, b) => {
+                        const priorityOrder = { High: 1, Medium: 2, Low: 3, Normal: 2 };
+                        const pA = priorityOrder[a.priority] || 4;
+                        const pB = priorityOrder[b.priority] || 4;
+                        return pA - pB;
+                    })
+                    .forEach(product => { 
+                %>
+                <tr>
+                    <td><strong><%= product.name %></strong></td>
+                    <td style="color:#64748b; font-family:monospace;">PRD-<%= product.product_id.toString().padStart(4, '0') %></td>
+                    <td>General</td>
+                    <td><%= product.quantity %></td>
+                    <td>
+                        <span class="badge 
+                            <%= product.priority === 'High' ? 'badge-high' : '' %>
+                            <%= product.priority === 'Medium' || product.priority === 'Normal' ? 'badge-medium' : '' %>
+                            <%= product.priority === 'Low' ? 'badge-low' : '' %>
+                        ">
+                            <%= product.priority || 'Normal' %>
+                        </span>
+                    </td>
+                    <td>Rack <%= product.rack_id %>, Bin <%= product.bin_id %></td>
+                    <td class="action-row">
+                        <button title="Edit"><i class="fa-regular fa-pen-to-square"></i></button>
+                        <button class="del" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+                    </td>
+                </tr>
+                <% }) } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                            No inventory records identified in database arrays. 
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+        
+        <div class="pagination">
+            <div>Showing <strong>1</strong> to <strong><%= typeof products !== 'undefined' ? products.length : 0 %></strong> of <strong><%= typeof products !== 'undefined' ? products.length : 0 %></strong> results</div>
+            <div class="page-ctrls">
+                <button disabled>Previous</button>
+                <button>1</button>
+                <button disabled>Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Overlay Native to Inventory -->
+<div class="modal-overlay" id="addItemsModal">
+    <div class="modal-box">
+      <div class="modal-title">
+        Add Items to Warehouse
+        <button class="modal-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form action="/submit-batch" method="POST" id="addForm" onsubmit="return submitSingleBatch();">
+        <input type="hidden" name="products" id="productsData" />
+        
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" class="form-input" id="ProductName" autocomplete="off" required />
+        </div>
+
+        <div class="form-group">
+          <label>SKU</label>
+          <input type="text" class="form-input" id="sku" autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" class="form-input" id="category" autocomplete="off" />
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" class="form-input" id="quant" autocomplete="off" required />
+            </div>
+
+            <div class="form-group">
+                <label>Weight (kg)</label>
+                <input type="number" class="form-input" id="weight" step="any" autocomplete="off" required />
+            </div>
+        </div>
+
+        <div class="form-group">
+          <label>Size (sq ft)</label>
+          <input type="number" class="form-input" id="size" step="any" autocomplete="off" required />
+        </div>
+
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-input" id="priority">
+            <option value="High">High</option>
+            <option value="Normal">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width:100%;">Submit</button>
+        <button type="button" class="btn-outlined" onclick="closeModals()" style="width:100%; margin-top:12px;">Cancel</button>
+      </form>
+    </div>
+</div>
+
+<script>
     const searchInput = document.getElementById("search");
     const tableRows = document.querySelectorAll("#productTable tr");
 
+    // O(1) Local JS Search emulation across parsed DOM string tree
     searchInput.addEventListener("keyup", () => {
       const filter = searchInput.value.toLowerCase();
-
       tableRows.forEach(row => {
         const rowText = row.innerText.toLowerCase();
-        if (rowText.includes(filter)) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
+        row.style.display = rowText.includes(filter) ? "" : "none";
       });
     });
-  </script>
 
+    // Modal Control Logic Bound Exclusively to Inventory Page
+    const adModal = document.getElementById('addItemsModal');
+    function openAddModal(){ adModal.classList.add('show'); }
+    function closeModals(){ 
+        adModal.classList.remove('show'); 
+        document.getElementById("addForm").reset();
+    }
+    
+    // Explicit close bounds on exterior overlay click
+    adModal.addEventListener('click', (e) => {
+        if(e.target === adModal) closeModals();
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModals();
+    });
+
+    function submitSingleBatch() {
+        const name = document.getElementById("ProductName").value;
+        const quant = document.getElementById("quant").value;
+        const size = document.getElementById("size").value;
+        const priority = document.getElementById("priority").value;
+        const weight = document.getElementById("weight").value;
+        const sku = document.getElementById("sku").value; 
+        const category = document.getElementById("category").value; 
+
+        if (!name || !quant || !size || !priority || !weight) {
+            alert("Please fill all required fields.");
+            return false;
+        }
+
+        const productArr = [{ name, quant: +quant, size: +size, priority, weight: +weight, sku, category }];
+        document.getElementById("productsData").value = JSON.stringify(productArr);
+        return true;
+    }
+</script>
 </body>
 </html>
-
-<%- include('partials/footer.ejs') %>

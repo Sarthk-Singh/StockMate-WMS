@@ -25,9 +25,13 @@ const productGetter = require('./routes/productRouter.js');
 // NEW Dashboard route (your upgraded one)
 const dashboardRoutes = require('./routes/dashboardRoutes.js');
 
+// API Algorithmic Routes (Knapsack + Hashing)
+const apiRoutes = require('./routes/apiRoutes.js');
+
 // Middleware ---------------------------------------------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, "public")));     // Serve /public correctly
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json()); // Required for Modal JSON fetch payloads
 app.set("view engine", "ejs");
 app.use(session({
     secret: process.env.SESSION_SECRET || "xyz123secret",
@@ -55,6 +59,7 @@ app.use('/product', requireAuth, productGetter);
 // NEW DASHBOARD ROUTES
 // ----------------------------------------------------------------------------------------------
 app.use('/dashboard', requireAuth, dashboardRoutes);
+app.use('/', apiRoutes); // Mounts /inventory & /warehouse local algorithms
 // Now your dashboard loads the warehouse list page + warehouse view page
 // /dashboard               -> warehouse cards
 // /dashboard/view/:id     -> full fancy dashboard

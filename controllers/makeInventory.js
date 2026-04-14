@@ -17,6 +17,9 @@ const post = async (req, res) => {
   const LengthOfBins = parseFloat(req.body.LengthOfBins);
   const WidthOfBins = parseFloat(req.body.WidthOfBins);
   const HeightOfBins = parseFloat(req.body.HeightOfBins);
+  // CapacityOfBins can be manually set, or auto-computed from volume
+  const binVolume = LengthOfBins * WidthOfBins * HeightOfBins;
+  const CapacityOfBins = req.body.CapacityOfBins ? parseFloat(req.body.CapacityOfBins) : binVolume;
 
   try {
     // Total volume of warehouse
@@ -24,8 +27,6 @@ const post = async (req, res) => {
 
     // Volume of one rack and one bin
     const rackVolume = LengthOfRacks * WidthOfRacks * HeightOfRacks;
-    const binVolume = LengthOfBins * WidthOfBins * HeightOfBins;
-    req.session.load = binVolume;
 
     // Check if all racks can fit inside warehouse
     const totalRackVolume = numberOfRacks * rackVolume;
@@ -43,9 +44,10 @@ const post = async (req, res) => {
     const totalBins = numberOfRacks * binsPerRack;
 
     // STEP 1: Insert warehouse
+    const company = req.session.company_name || req.session.companyName;
     const warehouseRes = await db.query(
       "INSERT INTO warehouse(name, company_name, length, width, height, usable_space) VALUES ($1, $2, $3, $4, $5, $6) RETURNING warehouse_id",
-      [warehouseName, req.session.companyName, lengthWarehouse, WidthWarehouse, HeightWarehouse, usable]
+      [warehouseName, company, lengthWarehouse, WidthWarehouse, HeightWarehouse, usable]
     );
     const warehouse_id = warehouseRes.rows[0].warehouse_id;
 
@@ -72,7 +74,7 @@ const post = async (req, res) => {
         binPromises.push(
           db.query(
             "INSERT INTO bins(warehouse_id, length, width, height, capacity, current_load, rack_id) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-            [warehouse_id, LengthOfBins, WidthOfBins, HeightOfBins, binVolume, 0, rackId]
+            [warehouse_id, LengthOfBins, WidthOfBins, HeightOfBins, CapacityOfBins, 0, rackId]
           )
         );
       }
@@ -82,7 +84,7 @@ const post = async (req, res) => {
     await Promise.all(binPromises);
     
     req.session.warehouseMsg = `Warehouse created with ${numberOfRacks} racks and ${totalBins} bins.`;
-    res.redirect("/home");
+    res.redirect("/warehouse");
 
   } catch (err) {
     console.error("Error creating warehouse:", err);

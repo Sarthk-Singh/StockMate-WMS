@@ -283,42 +283,116 @@ summary.rack-summary::-webkit-details-marker { display: none; }
     </div>
 </div>
 
-<!-- Add Warehouse Modal -->
+<!-- Add Warehouse Modal — Full Config Form -->
 <div class="modal-overlay" id="whModal">
-    <div class="modal-box">
-      <div class="modal-title">
-        Add New Warehouse
-        <button class="modal-close" onclick="closeWhModal()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-box" style="max-width:600px; width:100%;">
+      <div class="modal-title" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1.5rem;">
+        <div>
+            <div style="font-size:17px; font-weight:500; color:var(--text-primary);">New Warehouse Setup</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">All dimensions in meters (m)</div>
+        </div>
+        <button class="modal-close" onclick="closeWhModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <form action="/makeInv" method="POST" id="whForm">
-        <div class="form-group">
-            <label>Warehouse Name / ID</label>
-            <input type="text" name="warehouseName" class="form-input" required>
-        </div>
-        <div class="form-group">
-            <label>Geographic Location</label>
-            <input type="text" class="form-input" placeholder="e.g. Sector 7G">
-        </div>
+      <form action="/makeInv" method="POST" id="whForm" style="display:flex; flex-direction:column; gap:1.25rem;">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div class="form-group">
-                <label>Width (m)</label>
-                <input type="number" name="wRow" class="form-input" required>
+        <!-- Warehouse Dimensions -->
+        <div>
+            <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-warehouse" style="color:var(--primary-accent);"></i> Warehouse Dimensions
             </div>
-            <div class="form-group">
-                <label>Length (m)</label>
-                <input type="number" name="wCol" class="form-input" required>
+            <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:10px;">
+                <div class="form-group">
+                    <label>Warehouse Name</label>
+                    <input type="text" name="warehouseName" class="form-input" placeholder="e.g. Main Distribution Center" required>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Width (m)</label>
+                    <input type="number" name="WidthWarehouse" id="mwW" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Length (m)</label>
+                    <input type="number" name="lengthWarehouse" id="mwL" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Height (m)</label>
+                    <input type="number" name="HeightWarehouse" id="mwH" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Ceiling Height (m)</label>
-            <input type="number" name="wHei" class="form-input" required>
+        <!-- Rack Configuration -->
+        <div>
+            <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-server" style="color:var(--primary-accent);"></i> Rack Configuration
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Length (m)</label>
+                    <input type="number" name="LengthOfRacks" id="mrL" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Width (m)</label>
+                    <input type="number" name="WidthOfRacks" id="mrW" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Height (m)</label>
+                    <input type="number" name="HeightOfRacks" id="mrH" class="form-input" step="any" min="0.1" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Num. Racks</label>
+                    <input type="number" name="numberOfRacks" id="mnRacks" class="form-input" min="1" placeholder="Auto" required>
+                </div>
+            </div>
         </div>
 
-        <button type="submit" class="btn-primary" style="width:100%;">Establish Infrastructure</button>
-        <button type="button" class="btn-outlined" onclick="closeWhModal()" style="width:100%; margin-top:12px;">Cancel</button>
+        <!-- Bin Configuration -->
+        <div>
+            <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-cubes" style="color:var(--primary-accent);"></i> Bin Configuration
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Length (m)</label>
+                    <input type="number" name="LengthOfBins" id="mbL" class="form-input" step="any" min="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Width (m)</label>
+                    <input type="number" name="WidthOfBins" id="mbW" class="form-input" step="any" min="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Height (m)</label>
+                    <input type="number" name="HeightOfBins" id="mbH" class="form-input" step="any" min="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Capacity (m³)</label>
+                    <input type="number" name="CapacityOfBins" id="mbCap" class="form-input" step="any" min="0.01" placeholder="Auto">
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Preview Strip -->
+        <div id="mPreview" style="background:#f8fafc; border:1px solid var(--border-color); border-radius:8px; padding:12px 16px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; display:none;">
+            <div style="text-align:center;">
+                <div style="font-size:18px; font-weight:500; color:var(--primary-accent);" id="mpRacks">—</div>
+                <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Max Racks</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:18px; font-weight:500; color:var(--primary-accent);" id="mpBpr">—</div>
+                <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Bins/Rack</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:18px; font-weight:500; color:var(--primary-accent);" id="mpTotal">—</div>
+                <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Total Bins</div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:4px;">
+            <button type="submit" class="btn-primary" style="flex:1;">Create Warehouse</button>
+            <button type="button" class="btn-outlined" onclick="closeWhModal()">Cancel</button>
+        </div>
       </form>
     </div>
 </div>
@@ -340,15 +414,51 @@ summary.rack-summary::-webkit-details-marker { display: none; }
 
     // Modal Mechanics
     const m = document.getElementById('whModal');
-    function openWhModal() { m.classList.add('show'); }
+    function openWhModal() { m.style.display = 'flex'; }
     function closeWhModal() { 
-        m.classList.remove('show'); 
+        m.style.display = 'none';
         document.getElementById('whForm').reset();
+        ['mpRacks','mpBpr','mpTotal'].forEach(id => { document.getElementById(id).innerText = '—'; });
     }
 
     m.addEventListener('click', e => { if(e.target === m) closeWhModal(); });
     document.addEventListener("keydown", e => { if(e.key === "Escape") closeWhModal(); });
-</script>
 
+    // Live Preview inside Modal
+    function mv(id) {
+        const el = document.getElementById(id);
+        return el && el.value ? parseFloat(el.value) : 0;
+    }
+    function updateModalPreview() {
+        const wVol  = mv('mwL') * mv('mwW') * mv('mwH');
+        const rVol  = mv('mrL') * mv('mrW') * mv('mrH');
+        const bVol  = mv('mbL') * mv('mbW') * mv('mbH');
+        const preview = document.getElementById('mPreview');
+
+        if(wVol > 0 || rVol > 0 || bVol > 0) preview.style.display = 'grid';
+
+        if(wVol > 0 && rVol > 0) {
+            const maxR = Math.floor(wVol / rVol);
+            document.getElementById('mpRacks').innerText = maxR;
+            const nr = document.getElementById('mnRacks');
+            nr.max = maxR;
+            if(!nr.value || parseInt(nr.value) > maxR) nr.value = maxR;
+        }
+        if(bVol > 0 && !document.getElementById('mbCap').value) {
+            document.getElementById('mbCap').value = bVol.toFixed(3);
+        }
+        if(rVol > 0 && bVol > 0) {
+            const bpr = Math.floor(rVol / bVol);
+            document.getElementById('mpBpr').innerText = bpr < 1 ? '⚠' : bpr;
+            const nr = parseInt(document.getElementById('mnRacks').value) || 0;
+            document.getElementById('mpTotal').innerText = bpr >= 1 ? (nr * bpr) : '—';
+        }
+    }
+    ['mwW','mwL','mwH','mrL','mrW','mrH','mbL','mbW','mbH','mnRacks'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', updateModalPreview);
+    });
+</script>
 </body>
 </html>
+

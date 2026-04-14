@@ -174,37 +174,38 @@
 <div class="dashboard-container">
     <div class="hero-section">
         <div>
-            <!-- Fallback to "User" if res.locals/req.session not specifically parsed -->
-            <h1 class="hero-greeting">Good morning, <%= typeof name !== 'undefined' ? name : 'Sarthak' %></h1>
+            <h1 class="hero-greeting"><%= greeting %>, <%= name %></h1>
             <p class="hero-subtitle">Here's what's happening in your warehouse today.</p>
         </div>
         <div class="hero-actions">
-            <!-- Modal Triggers from Inventory View -->
-            <button class="btn-primary" onclick="window.location.href='/product'">Add Product</button>
-            <button class="btn-outlined">Import CSV</button>
+            <button class="btn-primary" onclick="openModal('addModal')">Add Product</button>
+            <button class="btn-outlined" onclick="window.location.href='/makeInv'">Configure Warehouse</button>
         </div>
     </div>
 
     <div class="kpi-grid">
         <div class="card kpi-card">
             <div class="kpi-label">Total Products</div>
-            <div class="kpi-value">1,248</div>
-            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-arrow-trend-up"></i> +12% this week</div>
+            <div class="kpi-value"><%= totalProducts.toLocaleString() %></div>
+            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-boxes-stacked"></i> Across all warehouses</div>
         </div>
         <div class="card kpi-card">
             <div class="kpi-label">Space Utilized</div>
-            <div class="kpi-value">64%</div>
-            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-warehouse"></i> Healthy</div>
+            <div class="kpi-value"><%= spacePercent %>%</div>
+            <div class="kpi-indicator <%= spaceHealthClass %>"><i class="fa-solid fa-warehouse"></i> <%= spaceHealth %></div>
         </div>
         <div class="card kpi-card">
             <div class="kpi-label">Low Stock Alerts</div>
-            <div class="kpi-value">8</div>
-            <div class="kpi-indicator indicator-warning"><i class="fa-solid fa-triangle-exclamation"></i> Requires attention</div>
+            <div class="kpi-value"><%= lowStockCount %></div>
+            <div class="kpi-indicator <%= lowStockCount > 0 ? 'indicator-warning' : 'indicator-positive' %>">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <%= lowStockCount > 0 ? 'Requires attention' : 'All stocked' %>
+            </div>
         </div>
         <div class="card kpi-card">
             <div class="kpi-label">Active Bins</div>
-            <div class="kpi-value">340</div>
-            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-boxes-stacked"></i> 82 free bins</div>
+            <div class="kpi-value"><%= totalBins %></div>
+            <div class="kpi-indicator indicator-positive"><i class="fa-solid fa-boxes-stacked"></i> <%= freeBins %> free bins</div>
         </div>
     </div>
 
@@ -212,36 +213,22 @@
         <div class="card">
             <div class="section-title">Recent Activity</div>
             <ul class="feed-list">
-                <li class="feed-item">
-                    <div class="feed-dot"></div>
-                    <div>
-                        <div class="feed-text">Product added (SKU: APPL-12X)</div>
-                        <div class="feed-time">10 minutes ago</div>
-                    </div>
-                </li>
-                <li class="feed-item">
-                    <div class="feed-dot" style="background:var(--success)"></div>
-                    <div>
-                        <div class="feed-text">Reorganized Rack A2 utilizing Knapsack</div>
-                        <div class="feed-time">45 minutes ago</div>
-                    </div>
-                </li>
-                <li class="feed-item">
-                    <div class="feed-dot" style="background:#cbd5e1"></div>
-                    <div>
-                        <div class="feed-text">CSV Import complete (42 items)</div>
-                        <div class="feed-time">2 hours ago</div>
-                    </div>
-                </li>
-                <li class="feed-item">
-                    <div class="feed-dot" style="background:var(--warning)"></div>
-                    <div>
-                        <div class="feed-text">Stock alert for 'Copper Tubing'</div>
-                        <div class="feed-time">Yesterday</div>
-                    </div>
-                </li>
+                <% if (activityLog && activityLog.length > 0) { %>
+                    <% activityLog.forEach(function(log) { %>
+                    <li class="feed-item">
+                        <div class="feed-dot" style="background:<%= log.dotColor %>"></div>
+                        <div>
+                            <div class="feed-text"><%= log.action %><% if(log.detail) { %> — <span style="color:var(--text-muted);"><%= log.detail %></span><% } %></div>
+                            <div class="feed-time"><%= log.timeAgo %></div>
+                        </div>
+                    </li>
+                    <% }) %>
+                <% } else { %>
+                    <li style="text-align:center; padding:2rem 0; color:var(--text-muted); font-size:13px;">
+                        No activity yet. Add products or reorganize bins to see real logs here.
+                    </li>
+                <% } %>
             </ul>
-            <a href="#" style="display:block; margin-top:20px; font-size:13px; color:var(--primary-accent);">View all activity &rarr;</a>
         </div>
 
         <div class="card">
@@ -250,10 +237,10 @@
             <div class="capacity-bar-wrap">
                 <div class="cap-title">
                     <span>Warehouse Capacity</span>
-                    <strong>65%</strong>
+                    <strong><%= spacePercent %>%</strong>
                 </div>
                 <div class="cap-track">
-                    <div class="cap-fill"></div>
+                    <div class="cap-fill" style="width:<%= spacePercent %>%; background:<%= spacePercent > 85 ? 'var(--danger)' : spacePercent > 65 ? 'var(--warning)' : 'var(--primary-accent)' %>;"></div>
                 </div>
             </div>
 
@@ -261,40 +248,488 @@
                 <span>Low Stock Items</span>
             </div>
             <div class="low-stock-list">
-                <div class="ls-item">
-                    <span style="font-size:14px;">Lithium Cells</span>
-                    <span class="ls-badge">5 left</span>
-                </div>
-                <div class="ls-item">
-                    <span style="font-size:14px;">Steel Bearings</span>
-                    <span class="ls-badge">12 left</span>
-                </div>
-                <div class="ls-item">
-                    <span style="font-size:14px;">Cardboard Pkg</span>
-                    <span class="ls-badge">40 left</span>
-                </div>
+                <% if (lowStockItems && lowStockItems.length > 0) { %>
+                    <% lowStockItems.forEach(function(item) { %>
+                    <div class="ls-item">
+                        <span style="font-size:14px;"><%= item.name %></span>
+                        <span class="ls-badge"><%= item.quantity %> left</span>
+                    </div>
+                    <% }) %>
+                <% } else { %>
+                    <div style="font-size:13px; color:var(--text-muted); padding:8px 0;">No low-stock items — all quantities healthy.</div>
+                <% } %>
             </div>
             <a href="/product" style="display:block; margin-top:16px; font-size:13px; color:var(--primary-accent);">View all inventory &rarr;</a>
         </div>
     </div>
 
     <div class="quick-actions-row">
-        <div class="card action-card" onclick="window.location.href='/product'">
+        <div class="card action-card" onclick="openModal('addModal')">
             <div class="action-icon"><i class="fa-solid fa-plus-circle"></i></div>
             <div class="action-title">Add New Product <span class="action-arrow">&rarr;</span></div>
             <div class="action-desc">Log incoming inventory using predictive capacity algos.</div>
         </div>
-        <div class="card action-card" onclick="window.location.href='/product'">
+        <div class="card action-card" onclick="openModal('searchModal')">
             <div class="action-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
             <div class="action-title">Search Product <span class="action-arrow">&rarr;</span></div>
             <div class="action-desc">O(1) Hash lookups to locate items physically within seconds.</div>
         </div>
-        <div class="card action-card" onclick="window.location.href='/warehouse'">
+        <div class="card action-card" onclick="openModal('reorgModal')">
             <div class="action-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
             <div class="action-title">Reorganize Bins <span class="action-arrow">&rarr;</span></div>
             <div class="action-desc">Optimize spatial distribution inside existing hardware.</div>
         </div>
     </div>
 </div>
-</body>
-</html>
+
+<!-- ========================================== -->
+<!-- FEATURE 1: ADD PRODUCT MODAL -->
+<!-- ========================================== -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-box" style="position:relative;">
+        <button class="modal-close" onclick="closeModal('addModal')" style="position:absolute; top:1.5rem; right:1.5rem; background:none; border:none; font-size:20px; cursor:pointer;" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        
+        <!-- Step 1: Select Warehouse -->
+        <div id="addStep1">
+            <div class="section-title" style="font-size:18px; margin-bottom:1.5rem; border:none;">Step 1: Select Target Warehouse</div>
+            <div id="whLoader" style="text-align:center; padding:2rem 0;"><i class="fa-solid fa-circle-notch fa-spin" style="color:#378ADD; font-size:24px;"></i></div>
+            <div id="whList" style="display:flex; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto; padding-right:8px;"></div>
+        </div>
+
+        <!-- Step 2: Form -->
+        <div id="addStep2" style="display:none;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
+                <button type="button" onclick="goToAddStep(1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:16px;"><i class="fa-solid fa-arrow-left"></i></button>
+                <div class="section-title" style="font-size:18px; margin:0; border:none;">Add Product</div>
+                <span id="selWhBadge" style="background:#E6F1FB; color:#185FA5; font-size:11px; border-radius:99px; padding:2px 8px; font-weight:500;">--</span>
+            </div>
+            
+            <form id="addForm">
+                <input type="hidden" id="addWarehouseId">
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Product Name</label>
+                    <input type="text" id="addName" class="form-input" required style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">SKU</label>
+                    <input type="text" id="addSku" class="form-input" required style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Category</label>
+                    <input type="text" id="addCategory" class="form-input" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                </div>
+                
+                <div style="display:flex; gap:16px;">
+                    <div class="form-group" style="flex:1; margin-bottom:1rem;">
+                        <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Quantity</label>
+                        <input type="number" id="addQty" class="form-input" required min="1" value="1" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="flex:1; margin-bottom:1rem;">
+                        <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Size (sq ft)</label>
+                        <input type="number" id="addSize" class="form-input" required min="0" step="0.1" value="1.0" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Priority</label>
+                    <select id="addPriority" class="form-input" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box; background:#fff;">
+                        <option value="High">High</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+    
+                <!-- Predictive Panel -->
+                <div id="predictivePanel" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:1.5rem; font-size:13px; color:#334155;">
+                    <div style="font-weight:600; margin-bottom:8px; color:#0f172a;"><i class="fa-solid fa-chart-pie"></i> Predictive Capacity Preview</div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Space Required:</span> <strong id="predReq">1.0 sq ft</strong>
+                    </div>
+                    <div style="font-style:italic; font-size:12px; margin-top:8px; color:#64748b;">Knapsack resolver localizes to selected warehouse.</div>
+                </div>
+    
+                <button type="submit" id="addSubmitBtn" style="background:#378ADD; color:white; width:100%; padding:11px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">Add & Allocate</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- FEATURE 2: SEARCH PRODUCT MODAL -->
+<!-- ========================================== -->
+<div class="modal-overlay" id="searchModal">
+    <div class="modal-box" style="position:relative;">
+        <button class="modal-close" onclick="closeModal('searchModal')" style="position:absolute; top:1.5rem; right:1.5rem; background:none; border:none; font-size:20px; cursor:pointer;" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
+            <div class="section-title" style="font-size:18px; margin:0; border:none;">Search Product</div>
+            <span style="background:#E6F1FB; color:#185FA5; font-size:11px; border-radius:99px; padding:2px 8px; font-weight:500;">⚡ O(1) Hash Lookup</span>
+        </div>
+        
+        <form id="searchForm" style="display:flex; gap:8px; margin-bottom:1.5rem;">
+            <input type="text" id="searchInput" class="form-input" placeholder="Enter product name or SKU..." required style="flex:1; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+            <button type="submit" style="background:#378ADD; color:white; padding:0 20px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">Search</button>
+        </form>
+
+        <div id="searchResultArea" style="min-height:100px;">
+            <div id="searchEmpty" style="text-align:center; color:#64748b; font-size:14px; padding:2rem 0;">Enter a product name or SKU to locate it instantly</div>
+            <div id="searchLoader" style="display:none; text-align:center; padding:2rem 0;"><i class="fa-solid fa-circle-notch fa-spin" style="color:#378ADD; font-size:24px;"></i></div>
+            <div id="searchNotFound" style="display:none; text-align:center; color:#A32D2D; font-size:14px; padding:2rem 0; background:#fef2f2; border-radius:8px;">No product found matching that query.</div>
+            
+            <div id="searchFoundList" style="display:none; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto;">
+                <!-- Result array items get injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- FEATURE 3: REORGANIZE BINS MODAL -->
+<!-- ========================================== -->
+<div class="modal-overlay" id="reorgModal">
+    <div class="modal-box" style="position:relative;">
+        <button class="modal-close" onclick="if(!isReorgRunning) closeModal('reorgModal')" style="position:absolute; top:1.5rem; right:1.5rem; background:none; border:none; font-size:20px; cursor:pointer;" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        <div class="section-title" style="font-size:18px; margin:0 0 8px 0; border:none;">Reorganize Bins</div>
+        <p style="font-size:13px; color:#64748b; margin-bottom:1.5rem; line-height:1.5;">Runs the 0/1 Knapsack Algorithm to redistribute all products across bins for maximum space efficiency.</p>
+        
+        <div id="reorgPreState" style="display:block;">
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:1.5rem;">
+                <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:11px; color:#64748b; text-transform:uppercase;">Total Products</div>
+                    <div style="font-size:20px; font-weight:600; color:#0f172a;" id="reorgProdCount"><i class="fa-solid fa-spinner fa-spin text-sm"></i></div>
+                </div>
+                <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:11px; color:#64748b; text-transform:uppercase;">Total Bins</div>
+                    <div style="font-size:20px; font-weight:600; color:#0f172a;" id="reorgBinCount"><i class="fa-solid fa-spinner fa-spin text-sm"></i></div>
+                </div>
+                <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:11px; color:#64748b; text-transform:uppercase;">Avg Util %</div>
+                    <div style="font-size:20px; font-weight:600; color:#0f172a;" id="reorgUtil"><i class="fa-solid fa-spinner fa-spin text-sm"></i></div>
+                </div>
+            </div>
+            
+            <button id="runReorgBtn" style="background:#378ADD; color:white; width:100%; padding:11px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; margin-bottom:12px;" onclick="executeReorg()">Run Optimization</button>
+            <div style="background:#FAEEDA; color:#854F0B; padding:10px 12px; border-radius:8px; font-size:12px; display:flex; gap:8px;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
+                This will reassign products to new bins. Current bin assignments will be updated atomicaly in the database.
+            </div>
+        </div>
+
+        <div id="reorgProgState" style="display:none; padding:2rem 0; text-align:center;">
+            <div style="font-size:14px; font-weight:500; color:#0f172a; margin-bottom:12px;">Running DP Knapsack Array Computation...</div>
+            <div class="cap-track" style="margin-bottom:8px;">
+                <div class="cap-fill" style="width:100%; animation: pulse 1s infinite alternate;"></div>
+            </div>
+            <div style="font-size:12px; color:#64748b; font-style:italic;">Processing distributed permutations...</div>
+        </div>
+
+        <div id="reorgResultState" style="display:none;">
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:1.5rem; border-radius:8px; text-align:center; margin-bottom:1.5rem;">
+                <i class="fa-solid fa-circle-check" style="color:#3B6D11; font-size:32px; margin-bottom:12px;"></i>
+                <div style="font-size:16px; font-weight:600; color:#0f172a; margin-bottom:16px;">Optimization Complete</div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:left; font-size:13px; color:#334155; background:white; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">
+                    <div>Bins Re-Packed:</div><strong id="optBins" style="text-align:right;">--</strong>
+                    <div>Items Moved:</div><strong id="optItems" style="text-align:right;">--</strong>
+                    <div>Efficiency Gain:</div><strong id="optGain" style="text-align:right; color:#3B6D11;">--</strong>
+                    <div>Compute Time:</div><strong id="optTime" style="text-align:right; color:#64748b;">--</strong>
+                </div>
+            </div>
+            <button style="background:#378ADD; color:white; width:100%; padding:11px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;" onclick="window.location.reload()">Done & Refresh Data</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Utilities for animating the loading bar */
+@keyframes pulse {
+    0% { transform: scaleX(0); transform-origin: left; }
+    100% { transform: scaleX(1); transform-origin: left; }
+}
+</style>
+
+<script>
+// --- GLOBAL MODAL CONTROLS ---
+const modals = ['addModal', 'searchModal', 'reorgModal'];
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+    if(id === 'reorgModal') fetchReorgPreStats();
+    if(id === 'addModal') {
+        goToAddStep(1);
+        fetchWhForAdd();
+    }
+}
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+    if(id === 'addModal') document.getElementById('addForm').reset();
+    if(id === 'searchModal') {
+        document.getElementById('searchForm').reset();
+        document.getElementById('searchFoundList').style.display = 'none';
+        document.getElementById('searchNotFound').style.display = 'none';
+        document.getElementById('searchEmpty').style.display = 'block';
+    }
+}
+window.onclick = function(event) {
+    modals.forEach(m => {
+        const md = document.getElementById(m);
+        if (event.target == md && (!isReorgRunning || m !== 'reorgModal')) closeModal(m);
+    });
+}
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") modals.forEach(m => { if(!isReorgRunning || m !== 'reorgModal') closeModal(m); });
+});
+
+
+// ==========================================
+// FEATURE 1: ADD NEW PRODUCT PREDICTIVE LOGIC
+// ==========================================
+function goToAddStep(step) {
+    document.getElementById('addStep1').style.display = step === 1 ? 'block' : 'none';
+    document.getElementById('addStep2').style.display = step === 2 ? 'block' : 'none';
+}
+
+async function fetchWhForAdd() {
+    document.getElementById('whLoader').style.display = 'block';
+    document.getElementById('whList').innerHTML = '';
+    
+    try {
+        const res = await fetch('/warehouse/list').then(r=>r.json());
+        document.getElementById('whLoader').style.display = 'none';
+        
+        if(res.success && res.warehouses.length > 0) {
+            res.warehouses.forEach(w => {
+                const opt = document.createElement('div');
+                opt.style.cssText = `padding:12px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background:#fff; transition:border-color 200ms ease;`;
+                opt.onclick = () => { opt.style.borderColor='#378ADD'; selectWh(w.id, w.name); };
+                opt.innerHTML = `
+                    <div style="font-weight:600; margin-bottom:4px; font-size:15px;">${w.name}</div>
+                    <div style="font-size:12px; color:#64748b; margin-bottom:8px;">${w.location} | Free Bins: <strong style="color:#0f172a;">${w.freeBins}</strong></div>
+                    <div class="cap-track" style="margin-bottom:4px;"><div class="cap-fill" style="width:${w.utilPercent}%"></div></div>
+                    <div style="font-size:11px; color:#64748b; text-align:right;">${w.utilPercent}% Utilization</div>
+                `;
+                document.getElementById('whList').appendChild(opt);
+            });
+        } else {
+            document.getElementById('whList').innerHTML = '<div style="font-size:13px; color:#A32D2D;">No warehouses available. Create one first!</div>';
+        }
+    } catch(e) {
+        document.getElementById('whLoader').style.display = 'none';
+    }
+}
+
+function selectWh(id, name) {
+    document.getElementById('addWarehouseId').value = id;
+    document.getElementById('selWhBadge').innerText = name;
+    goToAddStep(2);
+}
+
+const sizeInp = document.getElementById('addSize');
+const qtyInp = document.getElementById('addQty');
+const reqOut = document.getElementById('predReq');
+
+function updatePredictivePanel() {
+    const s = parseFloat(sizeInp.value) || 0;
+    const q = parseInt(qtyInp.value) || 0;
+    reqOut.innerText = (s * q).toFixed(1) + " sq ft";
+}
+sizeInp.addEventListener('input', updatePredictivePanel);
+qtyInp.addEventListener('input', updatePredictivePanel);
+
+document.getElementById('addForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('addSubmitBtn');
+    btn.innerText = "Allocating via Knapsack...";
+    btn.disabled = true;
+
+    try {
+        const payload = {
+            warehouse_id: document.getElementById('addWarehouseId').value,
+            name: document.getElementById('addName').value,
+            sku: document.getElementById('addSku').value,
+            category: document.getElementById('addCategory').value,
+            quantity: document.getElementById('addQty').value,
+            weight: document.getElementById('addWeight').value, // Fixed referencing nonexistent addWeight
+            size: document.getElementById('addSize').value,
+            priority: document.getElementById('addPriority').value
+        };
+
+        const response = await fetch('/inventory/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            closeModal('addModal');
+            showToast(`Product Assigned safely to Bin: ${result.binAssigned}`);
+            setTimeout(() => window.location.reload(), 1500); 
+        } else {
+            alert("Allocation Failed: " + (result.error || "Unknown Space Limits"));
+        }
+    } catch(err) {
+        alert("Server Error while posting product.");
+    } finally {
+        btn.innerText = "Add & Allocate";
+        btn.disabled = false;
+    }
+});
+
+
+// ==========================================
+// FEATURE 2: HASH MAP SEARCH & RETRIEVE
+// ==========================================
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = document.getElementById('searchInput').value.trim();
+    if(!q) return;
+
+    document.getElementById('searchEmpty').style.display = 'none';
+    document.getElementById('searchNotFound').style.display = 'none';
+    document.getElementById('searchFoundList').style.display = 'none';
+    document.getElementById('searchLoader').style.display = 'block';
+    document.getElementById('searchFoundList').innerHTML = ''; // Clear prev
+
+    try {
+        const rs = await fetch('/inventory/search?q=' + encodeURIComponent(q));
+        const res = await rs.json();
+        
+        document.getElementById('searchLoader').style.display = 'none';
+
+        if(res.found && res.products && res.products.length > 0) {
+            document.getElementById('searchFoundList').style.display = 'flex';
+            
+            res.products.forEach(p => {
+                let badgeStyle = "background:#fffbeb; color:#854F0B;"; // medium
+                if(p.priority == 2 || p.priority === 'High') { badgeStyle = "background:#fef2f2; color:#A32D2D;"; }
+                else if(p.priority == 0 || p.priority === 'Low') { badgeStyle = "background:#f0fdf4; color:#3B6D11;"; }
+                
+                const wname = p.warehouse_name || p.warehouse || `Warehouse-${p.warehouse_id||'?'}`;
+
+                const card = document.createElement('div');
+                card.style.cssText = "border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;";
+                card.innerHTML = `
+                    <div style="background:#f8fafc; padding:12px 16px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:600; font-size:15px; color:#0f172a;">${p.name} <span style="font-weight:400; font-size:12px; color:#64748b;">(in ${wname})</span></div>
+                        </div>
+                        <div class="ls-badge" style="${badgeStyle}">${p.priority == 2 || p.priority === 'High' ? 'High Prio' : 'Priority'}</div>
+                    </div>
+                    <div style="padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px; color:#64748b;">
+                        <div>SKU: <strong style="color:#0f172a;">${p.sku}</strong></div>
+                        <div>Quantity: <strong style="color:#0f172a;">${p.quantity}</strong></div>
+                        <div>Weight: <strong style="color:#0f172a;">${p.weight || '--'} kg</strong></div>
+                        <div>Total Size: <strong style="color:#0f172a;">${(parseFloat(p.size)*parseInt(p.quantity)).toFixed(1)} sqft</strong></div>
+                    </div>
+                    <div style="background:#E6F1FB; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0;">
+                        <div style="font-size:13px; color:#185FA5; font-weight:600;">
+                            <i class="fa-solid fa-location-dot"></i> Rack ${p.rack_number||p.rack_id||'--'} | Bin ${p.bin_number||p.bin_id||'--'}
+                        </div>
+                        <button onclick="confirmRetrieve(${p.product_id}, ${p.warehouse_id || 'null'}, ${p.bin_id || p.bin_number}, '${p.name}', ${p.quantity}, '${wname}')" 
+                                style="background:#A32D2D; color:white; border:none; border-radius:6px; padding:6px 12px; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-trash-can"></i> Retrieve Stock
+                        </button>
+                    </div>
+                `;
+                document.getElementById('searchFoundList').appendChild(card);
+            });
+            
+        } else {
+            document.getElementById('searchNotFound').style.display = 'block';
+        }
+    } catch(e) {
+        document.getElementById('searchLoader').style.display = 'none';
+        alert("Hash Lookup Error.");
+    }
+});
+
+async function confirmRetrieve(product_id, warehouse_id, bin_id, name, qty, wname) {
+    if(!confirm(`WARNING:\nYou are retrieving ALL ${qty} units of '${name}' out of physically mapped Bin ${bin_id} in ${wname}.\n\nThe records will be securely removed. Proceed?`)) return;
+    
+    try {
+        const payload = { product_id, warehouse_id, bin_id };
+        const response = await fetch('/inventory/retrieve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if(result.success) {
+            closeModal('searchModal');
+            showToast(`Retrieved ${qty} items from Bin ${bin_id}`);
+            setTimeout(()=>window.location.reload(), 1500);
+        } else {
+            alert("Retrieve Failed: " + result.error);
+        }
+    } catch(err) {
+        alert("Network Error during retrieve.");
+    }
+}
+
+
+// ==========================================
+// FEATURE 3: REORGANIZE DP KNAPSACK
+// ==========================================
+let isReorgRunning = false;
+
+async function fetchReorgPreStats() {
+    // Basic endpoint fetching total bins and items
+    try {
+        const rs = await fetch('/warehouse/stats');
+        const js = await rs.json();
+        if(js) {
+            document.getElementById('reorgProdCount').innerText = js.totalProducts || 0;
+            document.getElementById('reorgBinCount').innerText = js.totalBins || 0;
+            document.getElementById('reorgUtil').innerText = (js.utilPercent || 0) + "%";
+        }
+    } catch(e) {
+        document.getElementById('reorgProdCount').innerText = "--";
+        document.getElementById('reorgBinCount').innerText = "--";
+        document.getElementById('reorgUtil').innerText = "--";
+    }
+}
+
+async function executeReorg() {
+    isReorgRunning = true;
+    document.getElementById('reorgPreState').style.display = 'none';
+    document.getElementById('reorgProgState').style.display = 'block';
+
+    try {
+        const t0 = Date.now();
+        const response = await fetch('/warehouse/reorganize', { method: 'POST' });
+        const result = await response.json();
+        const tEnd = Date.now() - t0;
+
+        document.getElementById('reorgProgState').style.display = 'none';
+
+        if(result.success) {
+            document.getElementById('optBins').innerText = result.binsOptimized;
+            document.getElementById('optItems').innerText = result.productsReallocated;
+            document.getElementById('optGain').innerText = "+" + (result.efficiencyGain || 0) + "%";
+            document.getElementById('optTime').innerText = (result.timeTaken || tEnd) + "ms";
+            document.getElementById('reorgResultState').style.display = 'block';
+        } else {
+            alert("Optimization failed computing DP Array: " + result.error);
+            resetReorgLayer();
+        }
+    } catch(e) {
+        alert("Server unreachable.");
+        resetReorgLayer();
+    }
+}
+function resetReorgLayer() {
+    isReorgRunning = false;
+    document.getElementById('reorgProgState').style.display = 'none';
+    document.getElementById('reorgResultState').style.display = 'none';
+    document.getElementById('reorgPreState').style.display = 'block';
+}
+
+function showToast(msg) {
+    const d = document.createElement('div');
+    d.innerText = msg;
+    d.style.position = 'fixed'; d.style.bottom = '20px'; d.style.right = '20px';
+    d.style.background = '#0f172a'; d.style.color = '#fff'; d.style.padding = '12px 20px';
+    d.style.borderRadius = '8px'; d.style.zIndex = 10000; d.style.fontSize = '14px';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 3000);
+}
+</script>

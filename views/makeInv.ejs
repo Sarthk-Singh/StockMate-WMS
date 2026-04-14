@@ -1,260 +1,412 @@
 <%- include('partials/header.ejs') %>
+<title>Warehouse Configuration | StockMate</title>
 
-<title>Warehouse Configuration Setup</title>
-
-<!-- Enhanced local styles to compliment global Tailwind config -->
 <style>
-  /* Base transitions for inputs */
-  input[type="number"]::-webkit-inner-spin-button, 
-  input[type="number"]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-  }
-  input[type="number"] {
-      -moz-appearance: textfield;
-  }
-  
-  .input-label {
-      @apply text-xs flex font-bold uppercase tracking-widest text-on-surface-variant px-1;
-  }
-  
-  .input-group {
-      @apply space-y-1.5;
-  }
-  
-  .input-field {
-      @apply w-full pr-10 pl-4 py-3 bg-surface-container-lowest border border-outline-variant/60 rounded-xl text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
-  }
+.setup-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem;
+}
+.setup-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 2rem;
+}
+.back-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 150ms ease;
+}
+.back-btn:hover { background: #f1f5f9; }
 
-  .unit-badge {
-      @apply absolute right-3 top-1/2 -translate-y-1/2 text-outline/60 text-sm font-medium pointer-events-none;
-  }
+.setup-section {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.setup-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.section-icon {
+    width: 32px;
+    height: 32px;
+    background: #EFF6FF;
+    color: var(--primary-accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.setup-section-header h2 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+.form-grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+}
+.span-2 { grid-column: span 2; }
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.field-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.input-wrap {
+    position: relative;
+}
+.input-wrap input {
+    width: 100%;
+    padding: 10px 36px 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: white;
+    box-sizing: border-box;
+    transition: border-color 150ms ease;
+    -moz-appearance: textfield;
+}
+.input-wrap input::-webkit-inner-spin-button,
+.input-wrap input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.input-wrap input:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+}
+.input-unit {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.info-alert {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+.info-alert i { color: var(--primary-accent); margin-top: 2px; }
+.info-alert-text { font-size: 13px; color: #1e40af; }
+.info-alert-text strong { display: block; font-weight: 500; margin-bottom: 2px; }
+
+/* Live Preview Box */
+.preview-box {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.preview-stat { text-align: center; }
+.preview-stat .pval {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--primary-accent);
+}
+.preview-stat .plabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 2px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 2rem;
+}
 </style>
 
-<div class="min-h-screen bg-surface p-4 md:p-8 selection:bg-primary-fixed selection:text-on-primary-fixed">
-    <div class="max-w-4xl mx-auto space-y-8">
-        
-        <!-- Header Section -->
-        <header class="flex items-center gap-4 mb-2">
-            <a href="/dashboard" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low hover:bg-surface-variant text-on-surface transition-colors shadow-sm border border-outline-variant/20 group">
-                <i class="fa-solid fa-arrow-left group-hover:-translate-x-0.5 transition-transform"></i>
-            </a>
-            <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-on-surface">Warehouse Configuration Setup</h1>
-                <p class="text-sm font-medium text-on-surface-variant mt-1">Configure your warehouse dimensions and storage setup</p>
-            </div>
-        </header>
+<div class="setup-container">
 
-        <!-- Information / Alert Note -->
-        <div class="bg-primary-fixed text-on-primary-fixed-variant p-4 rounded-xl flex items-start gap-3 shadow-sm border border-primary/20">
-            <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">info</span>
-            <div>
-                <h3 class="text-sm font-bold">Measurement Requirements</h3>
-                <p class="text-xs mt-1">Note: All dimensions inputted across configuration sections must be evaluated in <strong>meters</strong>.</p>
+    <div class="setup-header">
+        <a href="/warehouse" class="back-btn">
+            <i class="fa-solid fa-arrow-left" style="font-size:14px;"></i>
+        </a>
+        <div>
+            <h1 style="font-size:22px; font-weight:500; color:var(--text-primary);">Warehouse Configuration Setup</h1>
+            <p style="font-size:13px; color:var(--text-muted); margin-top:2px;">Define your warehouse dimensions, racks, and bin layout</p>
+        </div>
+    </div>
+
+    <div class="info-alert">
+        <i class="fa-solid fa-circle-info"></i>
+        <div class="info-alert-text">
+            <strong>Measurement Units</strong>
+            All dimensions must be entered in <strong>meters (m)</strong>. Racks and bins will be auto-generated based on the configuration below.
+        </div>
+    </div>
+
+    <form action="/makeInv" method="POST" id="warehouseForm">
+
+        <!-- Section 1: Warehouse Dimensions -->
+        <div class="setup-section">
+            <div class="setup-section-header">
+                <div class="section-icon"><i class="fa-solid fa-warehouse"></i></div>
+                <h2>Warehouse Dimensions</h2>
+            </div>
+            <div class="form-grid-2">
+                <div class="field-group span-2">
+                    <label>Warehouse Name</label>
+                    <div class="input-wrap">
+                        <input type="text" name="warehouseName" placeholder="e.g. Distribution Center Alpha" required>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Width</label>
+                    <div class="input-wrap">
+                        <input type="number" name="WidthWarehouse" id="wW" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Length</label>
+                    <div class="input-wrap">
+                        <input type="number" name="lengthWarehouse" id="wL" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group span-2">
+                    <label>Height</label>
+                    <div class="input-wrap" style="max-width:320px;">
+                        <input type="number" name="HeightWarehouse" id="wH" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <form action="/makeInv" method="POST" id="formm" class="space-y-6">
-
-            <!-- Card 1: Warehouse Details -->
-            <section class="bg-surface-container-lowest rounded-2xl shadow-[0_12px_40px_rgba(24,24,27,0.04)] border border-outline-variant/20 p-6 md:p-8">
-                <div class="flex items-center gap-3 mb-6 border-b border-outline-variant/15 pb-4">
-                    <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
-                        <i class="fa-solid fa-warehouse text-primary text-sm"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-on-surface">Warehouse Details</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="input-group md:col-span-2">
-                        <label class="input-label">Warehouse Name</label>
-                        <div class="relative">
-                            <input type="text" name="warehouseName" class="input-field" placeholder="e.g. Distribution Center Alpha" required />
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Width of Warehouse</label>
-                        <div class="relative">
-                            <input type="number" name="WidthWarehouse" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Length of Warehouse</label>
-                        <div class="relative">
-                            <input type="number" name="lengthWarehouse" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group md:col-span-2">
-                        <label class="input-label">Height of Warehouse</label>
-                        <div class="relative md:w-1/2 md:pr-3">
-                            <input type="number" name="HeightWarehouse" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge md:right-6">m</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Card 2: Rack Configuration -->
-            <section class="bg-surface-container-lowest rounded-2xl shadow-[0_12px_40px_rgba(24,24,27,0.04)] border border-outline-variant/20 p-6 md:p-8">
-                <div class="flex items-center gap-3 mb-6 border-b border-outline-variant/15 pb-4">
-                    <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
-                        <i class="fa-solid fa-server text-primary text-sm"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-on-surface">Rack Configuration</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="input-group">
-                        <label class="input-label">Length of Racks</label>
-                        <div class="relative">
-                            <input type="number" name="LengthOfRacks" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Width of Racks</label>
-                        <div class="relative">
-                            <input type="number" name="WidthOfRacks" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Height of Racks</label>
-                        <div class="relative">
-                            <input type="number" name="HeightOfRacks" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label flex justify-between">
-                            Number of Racks
-                            <span class="text-[10px] text-primary lowercase tracking-normal bg-primary/10 px-1.5 rounded-sm">Auto-calculated</span>
-                        </label>
-                        <div class="relative">
-                            <input type="number" name="numberOfRacks" id="numberOfRacks" class="input-field bg-surface-container-low font-semibold text-primary focus:ring-0" placeholder="0" required min="0" />
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-outline/60 text-sm font-medium pointer-events-none"><i class="fa-solid fa-calculator"></i></span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Card 3: Bin Configuration -->
-            <section class="bg-surface-container-lowest rounded-2xl shadow-[0_12px_40px_rgba(24,24,27,0.04)] border border-outline-variant/20 p-6 md:p-8">
-                <div class="flex items-center gap-3 mb-6 border-b border-outline-variant/15 pb-4">
-                    <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
-                        <i class="fa-solid fa-cubes text-primary text-sm"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-on-surface">Bin Configuration</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="input-group">
-                        <label class="input-label">Length of Bins</label>
-                        <div class="relative">
-                            <input type="number" name="LengthOfBins" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Width of Bins</label>
-                        <div class="relative">
-                            <input type="number" name="WidthOfBins" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Height of Bins</label>
-                        <div class="relative">
-                            <input type="number" name="HeightOfBins" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">m</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label class="input-label">Capacity of Bins</label>
-                        <div class="relative">
-                            <input type="number" name="CapacityOfBins" class="input-field" step="any" placeholder="0.00" required />
-                            <span class="unit-badge">units</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Submit & Reset Buttons -->
-            <div class="flex items-center justify-end gap-4 mt-8 pt-4 pb-12">
-                <button type="reset" class="px-6 py-3 rounded-xl font-bold text-on-surface hover:bg-surface-container border border-transparent hover:border-outline-variant/50 transition-all">
-                    Reset Form
-                </button>
-                <button type="submit" class="micro-gradient-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all">
-                    Submit Layout Setup
-                </button>
+        <!-- Section 2: Rack Configuration -->
+        <div class="setup-section">
+            <div class="setup-section-header">
+                <div class="section-icon"><i class="fa-solid fa-server"></i></div>
+                <h2>Rack Configuration</h2>
             </div>
-            
-        </form>
-    </div>
+            <div class="form-grid-4">
+                <div class="field-group">
+                    <label>Rack Length</label>
+                    <div class="input-wrap">
+                        <input type="number" name="LengthOfRacks" id="rL" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Rack Width</label>
+                    <div class="input-wrap">
+                        <input type="number" name="WidthOfRacks" id="rW" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Rack Height</label>
+                    <div class="input-wrap">
+                        <input type="number" name="HeightOfRacks" id="rH" step="any" min="0.1" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>No. of Racks</label>
+                    <div class="input-wrap">
+                        <input type="number" name="numberOfRacks" id="numberOfRacks" min="1" placeholder="Auto" required>
+                        <span class="input-unit"><i class="fa-solid fa-calculator" style="font-size:11px;"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Bin Configuration -->
+        <div class="setup-section">
+            <div class="setup-section-header">
+                <div class="section-icon"><i class="fa-solid fa-cubes"></i></div>
+                <h2>Bin Configuration</h2>
+            </div>
+            <div class="form-grid-4">
+                <div class="field-group">
+                    <label>Bin Length</label>
+                    <div class="input-wrap">
+                        <input type="number" name="LengthOfBins" id="bL" step="any" min="0.01" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Bin Width</label>
+                    <div class="input-wrap">
+                        <input type="number" name="WidthOfBins" id="bW" step="any" min="0.01" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Bin Height</label>
+                    <div class="input-wrap">
+                        <input type="number" name="HeightOfBins" id="bH" step="any" min="0.01" placeholder="0.00" required>
+                        <span class="input-unit">m</span>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Max Capacity</label>
+                    <div class="input-wrap">
+                        <input type="number" name="CapacityOfBins" id="bCap" step="any" min="0.01" placeholder="Auto">
+                        <span class="input-unit">m³</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Summary Preview -->
+        <div class="setup-section">
+            <div class="setup-section-header">
+                <div class="section-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                <h2>Live Capacity Preview</h2>
+            </div>
+            <div class="preview-box">
+                <div class="preview-stat">
+                    <div class="pval" id="prevTotalRacks">—</div>
+                    <div class="plabel">Max Racks Possible</div>
+                </div>
+                <div class="preview-stat">
+                    <div class="pval" id="prevBinsPerRack">—</div>
+                    <div class="plabel">Bins per Rack</div>
+                </div>
+                <div class="preview-stat">
+                    <div class="pval" id="prevTotalBins">—</div>
+                    <div class="plabel">Total Bins</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="reset" class="btn-outlined" onclick="resetPreview()">Reset</button>
+            <button type="submit" class="btn-primary">Create Warehouse</button>
+        </div>
+    </form>
 </div>
 
 <script>
-  // Setup keyboard accessibility for inputs
-  const inputs = document.querySelectorAll('form input');
-  inputs.forEach((input, i) => {
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const next = inputs[i + 1];
-        if (next) next.focus();
-      }
-    });
-  });
+// ---- Auto-calculate everything on any dimension change ----
+const ids = ['wW','wL','wH','rL','rW','rH','bL','bW','bH'];
+ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updatePreview);
+});
 
-  // Rack Calculation Logic
-  function getValue(name) {
-    const input = document.getElementsByName(name)[0];
-    return input && input.value ? parseFloat(input.value) : 0;
-  }
+function v(id) {
+    const el = document.getElementById(id);
+    return el && el.value ? parseFloat(el.value) : 0;
+}
 
-  function calculateRacks() {
-    const warehouseLength = getValue("lengthWarehouse");
-    const warehouseWidth = getValue("WidthWarehouse");
-    const warehouseHeight = getValue("HeightWarehouse");
+function updatePreview() {
+    const warehouseVol = v('wL') * v('wW') * v('wH');
+    const rackVol = v('rL') * v('rW') * v('rH');
+    const binVol = v('bL') * v('bW') * v('bH');
 
-    const rackLength = getValue("LengthOfRacks");
-    const rackWidth = getValue("WidthOfRacks");
-    const rackHeight = getValue("HeightOfRacks");
+    const racksEl  = document.getElementById('prevTotalRacks');
+    const bprEl    = document.getElementById('prevBinsPerRack');
+    const totalEl  = document.getElementById('prevTotalBins');
+    const numInput = document.getElementById('numberOfRacks');
+    const capInput = document.getElementById('bCap');
 
-    const warehouseVolume = warehouseLength * warehouseWidth * warehouseHeight;
-    const rackVolume = rackLength * rackWidth * rackHeight;
-
-    const numRacksInput = document.getElementById("numberOfRacks");
- 
-    if (warehouseVolume > 0 && rackVolume > 0) {
-      const maxRacks = Math.floor(warehouseVolume / rackVolume);
-      numRacksInput.max = maxRacks;
-      numRacksInput.value = maxRacks; 
-      
-      // Auto-flash animation to indicate calculation
-      numRacksInput.classList.add('bg-primary-fixed');
-      setTimeout(()=> numRacksInput.classList.remove('bg-primary-fixed'), 400);
-
+    if(warehouseVol > 0 && rackVol > 0) {
+        const maxRacks = Math.floor(warehouseVol / rackVol);
+        racksEl.innerText = maxRacks;
+        numInput.max = maxRacks;
+        if(!numInput.value || parseInt(numInput.value) > maxRacks) {
+            numInput.value = maxRacks;
+        }
     } else {
-      numRacksInput.value = "";
-      numRacksInput.removeAttribute("max");
+        racksEl.innerText = '—';
     }
-  }
 
-  // Bind calculation to specific inputs
-  const inputFieldsToWatch = [
-    "lengthWarehouse", "WidthWarehouse", "HeightWarehouse",
-    "LengthOfRacks", "WidthOfRacks", "HeightOfRacks"
-  ];
-
-  inputFieldsToWatch.forEach(name => {
-    const input = document.getElementsByName(name)[0];
-    if (input) {
-      input.addEventListener("input", calculateRacks);
+    if(binVol > 0) {
+        // Auto-fill capacity field if user hasn't manually set it
+        if(!capInput.value) capInput.value = binVol.toFixed(3);
     }
-  });
+
+    if(rackVol > 0 && binVol > 0) {
+        const bpr = Math.floor(rackVol / binVol);
+        bprEl.innerText = bpr < 1 ? '⚠ Too large' : bpr;
+        const racks = parseInt(numInput.value) || 0;
+        totalEl.innerText = bpr >= 1 ? (racks * bpr) : '—';
+    } else {
+        bprEl.innerText = '—';
+        totalEl.innerText = '—';
+    }
+}
+
+// Recalculate total bins when number of racks is manually changed
+document.getElementById('numberOfRacks').addEventListener('input', updatePreview);
+
+function resetPreview() {
+    document.getElementById('prevTotalRacks').innerText = '—';
+    document.getElementById('prevBinsPerRack').innerText = '—';
+    document.getElementById('prevTotalBins').innerText = '—';
+}
+
+// Keyboard navigation between inputs
+const inputs = document.querySelectorAll('form input');
+inputs.forEach((input, i) => {
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const next = inputs[i + 1];
+            if (next) next.focus();
+        }
+    });
+});
 </script>
-
-<%- include('partials/footer.ejs') %>

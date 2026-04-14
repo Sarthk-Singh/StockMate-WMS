@@ -67,20 +67,47 @@ app.use('/', apiRoutes); // Mounts /inventory & /warehouse local algorithms
 // ----------------------------------------------------------------------------------------------
 // Warehouse Listing (Old Page)
 // ----------------------------------------------------------------------------------------------
+// Warehouse Listing
 app.get("/warehouse", requireAuth, async (req, res) => {
   try {
     const company = req.session.company_name || req.session.companyName;
 
-    const result = await db.query(
-      "SELECT warehouse_id, name, usable_space FROM warehouse WHERE company_name = $1",
-      [company]
-    );
+    const result = await db.query(`
+      SELECT
+        w.warehouse_id,
+        w.name,
+        w.length,
+        w.width,
+        w.height,
+        w.usable_space,
+        COUNT(DISTINCT r.rack_id) AS rack_count,
+        COUNT(DISTINCT b.bin_id) AS total_bins,
+        COUNT(DISTINCT CASE WHEN b.current_load = 0 THEN b.bin_id END) AS free_bins,
+        COALESCE(SUM(b.capacity), 0) AS total_capacity,
+        COALESCE(SUM(b.current_load), 0) AS total_used
+      FROM warehouse w
+      LEFT JOIN racks r ON r.warehouse_id = w.warehouse_id
+      LEFT JOIN bins b ON b.rack_id = r.rack_id
+      WHERE w.company_name = $1
+      GROUP BY w.warehouse_id, w.name, w.length, w.width, w.height, w.usable_space
+      ORDER BY w.name
+    `, [company]);
 
-    const warehouses = result.rows.map((row) => ({
-      id: row.warehouse_id,
-      name: row.name,
-      usable_space: row.usable_space
-    }));
+    const warehouses = result.rows.map(row => {
+      const cap   = parseFloat(row.total_capacity) || 0;
+      const used  = parseFloat(row.total_used) || 0;
+      const util  = cap > 0 ? Math.round((used / cap) * 100) : 0;
+      return {
+        id:           row.warehouse_id,
+        name:         row.name,
+        usable_space: parseFloat(row.usable_space) || 0,
+        rackCount:    parseInt(row.rack_count) || 0,
+        totalBins:    parseInt(row.total_bins) || 0,
+        freeBins:     parseInt(row.free_bins) || 0,
+        utilPercent:  util > 100 ? 100 : util,
+        availSqft:    Math.round(cap - used)
+      };
+    });
 
     res.render("warehousese", { warehouses });
 
@@ -115,9 +142,68 @@ app.get("/storage", requireAuth, (req, res) => {
   res.render("underConstruction.ejs");
 });
 
-app.get("/inventory", requireAuth, (req, res) => {
-  res.render("underConstruction.ejs");
+// Per-warehouse inventory list
+app.get("/inventory/:warehouseId", requireAuth, async (req, res) => {
+  try {
+    const company = req.session.company_name || req.session.companyName;
+    const warehouseId = parseInt(req.params.warehouseId);
+    if (!warehouseId) return res.status(400).send('Missing warehouse ID');
+
+    // Fetch warehouse details
+    const whRes = await db.query(
+      `SELECT w.warehouse_id, w.name, w.length, w.width, w.height, w.usable_space,
+              COUNT(DISTINCT r.rack_id) AS rack_count,
+              COUNT(DISTINCT b.bin_id) AS total_bins,
+              COUNT(DISTINCT CASE WHEN b.current_load = 0 THEN b.bin_id END) AS free_bins,
+              COALESCE(SUM(b.capacity),0) AS total_capacity,
+              COALESCE(SUM(b.current_load),0) AS total_used
+       FROM warehouse w
+       LEFT JOIN racks r ON r.warehouse_id = w.warehouse_id
+       LEFT JOIN bins b ON b.rack_id = r.rack_id
+       WHERE w.warehouse_id = $1 AND w.company_name = $2
+       GROUP BY w.warehouse_id`, [warehouseId, company]
+    );
+    if (!whRes.rows.length) return res.status(404).send('Warehouse not found');
+    const wh = whRes.rows[0];
+    const cap  = parseFloat(wh.total_capacity) || 0;
+    const used = parseFloat(wh.total_used) || 0;
+    const util = cap > 0 ? Math.round((used / cap) * 100) : 0;
+
+    // Fetch all products in this warehouse
+    const prodRes = await db.query(`
+      SELECT p.product_id, p.name, p.sku, p.category, p.quantity, p.priority,
+             p.weight, p.size, p.bin_id,
+             b.bin_id as b_id,
+             r.name as rack_name, r.rack_id
+      FROM products p
+      JOIN bins b ON p.bin_id = b.bin_id
+      JOIN racks r ON b.rack_id = r.rack_id
+      WHERE r.warehouse_id = $1
+      ORDER BY
+        CASE p.priority WHEN 'High' THEN 1 WHEN 'Medium' THEN 2 WHEN 'Normal' THEN 2 ELSE 3 END,
+        p.name
+    `, [warehouseId]);
+
+    res.render('productList', {
+      warehouse: {
+        id:          wh.warehouse_id,
+        name:        wh.name,
+        rackCount:   parseInt(wh.rack_count) || 0,
+        totalBins:   parseInt(wh.total_bins) || 0,
+        freeBins:    parseInt(wh.free_bins) || 0,
+        utilPercent: util,
+        availSqft:   Math.round(cap - used)
+      },
+      products: prodRes.rows
+    });
+  } catch (err) {
+    console.error('Inventory error:', err);
+    res.status(500).send('Server error');
+  }
 });
+
+// Redirect plain /inventory to warehouse picker
+app.get('/inventory', requireAuth, (req, res) => res.redirect('/warehouse'));
 
 app.get("/reports", requireAuth, (req, res) => {
   res.render("underConstruction.ejs");

@@ -182,18 +182,17 @@ summary.rack-summary::-webkit-details-marker { display: none; }
         <% 
            if(typeof warehouses !== 'undefined' && warehouses.length > 0) {
            warehouses.forEach(w => { 
-                // Dummy load % since db only holds usable_space currently
-                let load = Math.floor(Math.random() * 90) + 10; 
-                let loadClass = load > 85 ? 'fill-danger' : (load > 60 ? 'fill-warn' : 'fill-safe');
+               let loadClass = w.utilPercent > 85 ? 'fill-danger' : (w.utilPercent > 60 ? 'fill-warn' : 'fill-safe');
+               let healthLabel = w.utilPercent > 85 ? 'Critical' : (w.utilPercent > 60 ? 'Moderate' : 'Healthy');
         %>
         <div class="wh-card">
             <div class="wh-card-header">
                 <div>
                     <div class="wh-title"><%= w.name %></div>
-                    <div class="wh-location"><i class="fa-solid fa-location-dot"></i> HQ Facility</div>
+                    <div class="wh-location"><i class="fa-solid fa-location-dot"></i> <%= w.rackCount %> racks &bull; <%= w.totalBins %> bins</div>
                 </div>
                 <div class="wh-menu">
-                    <form action="/warehouse/delete/<%= w.id %>" method="POST" onsubmit="return confirm('Delete this warehouse?')" style="display:inline;">
+                    <form action="/warehouse/delete/<%= w.id %>" method="POST" onsubmit="return confirm('Delete this warehouse and ALL its racks, bins, and products?')" style="display:inline;">
                         <button type="submit" class="del" title="Delete Warehouse"><i class="fa-regular fa-trash-can"></i></button>
                     </form>
                 </div>
@@ -201,59 +200,46 @@ summary.rack-summary::-webkit-details-marker { display: none; }
 
             <div class="progress-wrap">
                 <div class="progress-meta">
-                    <span><strong><%= load %>%</strong> Full</span>
-                    <span><%= Math.floor((w.usable_space || 1000) * (1 - (load/100))) %> sqft available</span>
+                    <span><strong><%= w.utilPercent %>%</strong> Used &mdash; <span style="color:<%= w.utilPercent > 85 ? 'var(--danger)' : w.utilPercent > 60 ? 'var(--warning)' : 'var(--success)' %>"><%= healthLabel %></span></span>
+                    <span><%= w.freeBins %> bins free</span>
                 </div>
                 <div class="progress-track">
-                    <div class="progress-fill <%= loadClass %>" style="width: <%= load %>%;"></div>
+                    <div class="progress-fill <%= loadClass %>" style="width: <%= w.utilPercent %>%;"></div>
                 </div>
             </div>
 
-            <button class="btn-outlined" style="width:100%;" onclick="window.location.href='/manageInv?warehouseName=<%= w.name %>'">
-                View & Manage Inventory
-            </button>
-
-            <!-- Expanded Details Example HTML directly embedded -->
-            <details class="rack-details">
-                <summary class="rack-summary">
-                    Rack Sector A <i class="fa-solid fa-chevron-down" style="font-size:12px; color:var(--text-muted)"></i>
-                </summary>
-                <div class="rack-content">
-                    <div style="display:flex; justify-content:flex-end;">
-                        <button class="btn-outlined" style="padding: 4px 10px; font-size:12px;">Reorganize Rack</button>
-                    </div>
-                    <!-- Bin Data -->
-                    <div class="bin-item">
-                        <div class="bin-info">
-                            <strong>Bin 01</strong>
-                            <span>Mixed Electronics</span>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <span style="font-size:12px; font-weight:500;">80%</span>
-                            <div class="mini-progress-track"><div class="mini-progress-fill" style="width:80%;"></div></div>
-                            <button class="btn-outlined" style="padding:4px 8px; font-size:12px; color:var(--primary-accent); border:none;">Details</button>
-                        </div>
-                    </div>
-                    <div class="bin-item">
-                        <div class="bin-info">
-                            <strong>Bin 02</strong>
-                            <span>Packaging</span>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <span style="font-size:12px; font-weight:500;">22%</span>
-                            <div class="mini-progress-track"><div class="mini-progress-fill" style="width:22%; background:var(--success);"></div></div>
-                            <button class="btn-outlined" style="padding:4px 8px; font-size:12px; color:var(--primary-accent); border:none;">Details</button>
-                        </div>
-                    </div>
+            <!-- Real bin/rack stats row -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:1rem; background:#f8fafc; border-radius:8px; padding:12px; border:1px solid var(--border-color);">
+                <div style="text-align:center;">
+                    <div style="font-size:18px; font-weight:500; color:var(--primary-accent);"><%= w.rackCount %></div>
+                    <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Racks</div>
                 </div>
-            </details>
+                <div style="text-align:center; border-left:1px solid var(--border-color); border-right:1px solid var(--border-color);">
+                    <div style="font-size:18px; font-weight:500; color:var(--primary-accent);"><%= w.totalBins %></div>
+                    <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Total Bins</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:18px; font-weight:500; color:var(--success);"><%= w.freeBins %></div>
+                    <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px;">Free Bins</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <a href="/inventory/<%= w.id %>" class="btn-primary" style="text-align:center; text-decoration:none; padding:9px; font-size:13px;">
+                    <i class="fa-solid fa-boxes-stacked"></i> View Inventory
+                </a>
+                <button class="btn-outlined" style="font-size:13px;" onclick="window.location.href='/makeInv'">
+                    <i class="fa-solid fa-sliders"></i> Manage
+                </button>
+            </div>
         </div>
         <% }) } else { %>
             <div style="grid-column: span 2; text-align:center; padding: 4rem; color: var(--text-muted); background:var(--bg-card); border-radius:12px; border:1px solid var(--border-color);">
-                No warehouses established. Click "Add New Warehouse" to begin tracking physical coordinates.
+                No warehouses yet. Click <strong>"Add New Warehouse"</strong> above to get started.
             </div>
         <% } %>
     </div>
+
 
     <!-- Space Calculator Panel -->
     <div class="page-title" style="margin-bottom:1rem;">Usable Space Calculator</div>

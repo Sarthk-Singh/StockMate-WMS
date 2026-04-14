@@ -30,7 +30,7 @@
     
     <div class="nav-center">
         <a href="/dashboard" class="nav-link" id="nav-dashboard">Dashboard</a>
-        <a href="/product" class="nav-link" id="nav-inventory">Inventory</a>
+        <a href="/warehouse" class="nav-link" id="nav-inventory">Inventory</a>
         <a href="/warehouse" class="nav-link" id="nav-warehouse">Warehouse</a>
         <a href="/settings" class="nav-link" id="nav-settings">Settings</a>
     </div>
@@ -46,11 +46,11 @@
     // Simple script to highlight active nav
     const path = window.location.pathname;
     document.querySelectorAll('.nav-link').forEach(link => {
-        if(link.getAttribute('href') === path || 
-          (path.startsWith('/makeInv') && link.getAttribute('id') === 'nav-warehouse') || 
-          (path.startsWith('/managingInv') && link.getAttribute('id') === 'nav-inventory')) {
-            link.classList.add('active');
-        }
+        const href = link.getAttribute('href');
+        if(href === path) { link.classList.add('active'); return; }
+        if(path.startsWith('/makeInv') && link.id === 'nav-warehouse') link.classList.add('active');
+        if(path.startsWith('/inventory') && link.id === 'nav-inventory') link.classList.add('active');
+        if(path.startsWith('/warehouse') && link.id === 'nav-warehouse') link.classList.add('active');
     });
 
     // Temp logic: redirect /settings to somewhere generic since it may not exist yet

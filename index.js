@@ -43,17 +43,14 @@ app.set("views", path.join(__dirname, "views"));
 
 
 // ----------------------------------------------------------------------------------------------
-// AUTH + PRODUCT ROUTES
+// AUTH + CORE ROUTES
 // ----------------------------------------------------------------------------------------------
 app.get('/', (req, res) => res.redirect('/dashboard'));
-app.use('/signup', signUpRoutes);                 // Signup root
-app.use('/login', signInRoutes);                  // Login
+app.use('/signup', signUpRoutes);
+app.use('/login', signInRoutes);
 app.use('/makeInv', makeInv);
 app.use('/verify-otp', verifyOtp);
-app.use('/manageInv', manageInv);
-app.use('/submit-batch', addingProduct);
-app.use('/retrieve-product', retrieveProduct);
-app.use('/product', requireAuth, productGetter);
+// Note: /manageInv, /submit-batch, /retrieve-product, /product removed — superseded by /inventory routes
 
 // ----------------------------------------------------------------------------------------------
 // NEW DASHBOARD ROUTES
@@ -140,6 +137,171 @@ app.post("/warehouse/delete/:id", async (req, res) => {
 // Temporary route ----------------------------------------------------------------------------------------------
 app.get("/storage", requireAuth, (req, res) => {
   res.render("underConstruction.ejs");
+});
+
+// ──────────────────────────────────────────────────────────────
+// INVENTORY: CSV TEMPLATE DOWNLOAD
+// ──────────────────────────────────────────────────────────────
+app.get('/inventory/csv-template', requireAuth, (req, res) => {
+  const csv = [
+    'name,quantity,size,weight,priority,warehouse',
+    'Steel Bearings,100,0.5,2.0,High,Main Warehouse',
+    'Copper Tubing,50,1.2,4.5,Medium,Main Warehouse',
+    'Cardboard Boxes,200,0.8,0.3,Low,Main Warehouse'
+  ].join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="stockmate_template.csv"');
+  res.send(csv);
+});
+
+// ──────────────────────────────────────────────────────────────
+// INVENTORY: SINGLE PRODUCT ADD  (POST /inventory/add)
+// Uses existing apiController knapsack Best Fit logic
+// ──────────────────────────────────────────────────────────────
+app.post('/inventory/add', requireAuth, async (req, res) => {
+  try {
+    const { name, quantity, weight, size, priority, warehouse_id } = req.body;
+    const qNum = parseInt(quantity) || 1;
+    const sNum = parseFloat(size) || 1;
+    const itemWeight = sNum * qNum;
+    const compName = req.session.company_name || req.session.companyName || '';
+
+    // Verify the warehouse belongs to this company
+    const whCheck = await db.query(
+      'SELECT warehouse_id, name FROM warehouse WHERE warehouse_id = $1 AND company_name = $2',
+      [warehouse_id, compName]
+    );
+    if (!whCheck.rows.length) return res.json({ success: false, error: 'Warehouse not found for your company.' });
+    const whName = whCheck.rows[0].name;
+
+    // Best-Fit Decreasing bin selection
+    const binsRes = await db.query(`
+      SELECT b.* FROM bins b
+      JOIN racks r ON b.rack_id = r.rack_id
+      WHERE r.warehouse_id = $1
+      ORDER BY b.bin_id ASC
+    `, [warehouse_id]);
+
+    let bestBin = null, tightestFit = Infinity;
+    for (const b of binsRes.rows) {
+      const remain = parseFloat(b.capacity) - parseFloat(b.current_load || 0);
+      if (remain >= itemWeight && (remain - itemWeight) < tightestFit) {
+        tightestFit = remain - itemWeight;
+        bestBin = b;
+      }
+    }
+    if (!bestBin) return res.json({ success: false, error: `No bin has enough space. Need ${itemWeight.toFixed(2)} m³.` });
+
+    let prioInt = 1;
+    if (priority === 'High') prioInt = 2;
+    if (priority === 'Low')  prioInt = 0;
+
+    await db.query(
+      `INSERT INTO products (name, size, weight, quantity, priority, warehouse, company_name, bin_id, rack_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [name, sNum, parseFloat(weight)||0, qNum, prioInt, whName, compName, bestBin.bin_id, bestBin.rack_id]
+    );
+    await db.query('UPDATE bins SET current_load = current_load + $1 WHERE bin_id = $2', [itemWeight, bestBin.bin_id]);
+    await db.query(
+      'INSERT INTO activity_log (action, detail, user_id) VALUES ($1,$2,$3)',
+      ['Product added', `${name} → Bin ${bestBin.bin_id} (${whName})`, req.session.userId || null]
+    );
+    return res.json({ success: true, binAssigned: bestBin.bin_id, remainingSpace: tightestFit });
+  } catch (err) {
+    console.error('Add product error:', err);
+    return res.json({ success: false, error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────
+// INVENTORY: BULK CSV ADD  (POST /inventory/bulk-add)
+// ──────────────────────────────────────────────────────────────
+app.post('/inventory/bulk-add', requireAuth, async (req, res) => {
+  try {
+    const { rows, warehouse_id } = req.body;
+    const compName = req.session.company_name || req.session.companyName || '';
+    if (!rows || !rows.length) return res.json({ success: false, error: 'No rows provided.' });
+
+    // Verify warehouse belongs to this company
+    const whCheck = await db.query(
+      'SELECT warehouse_id, name FROM warehouse WHERE warehouse_id = $1 AND company_name = $2',
+      [warehouse_id, compName]
+    );
+    if (!whCheck.rows.length) return res.json({ success: false, error: 'Warehouse not found.' });
+    const whName = whCheck.rows[0].name;
+
+    // Load all bins for this warehouse once
+    const binsRes = await db.query(`
+      SELECT b.* FROM bins b
+      JOIN racks r ON b.rack_id = r.rack_id
+      WHERE r.warehouse_id = $1 ORDER BY b.bin_id ASC
+    `, [warehouse_id]);
+
+    // Keep a mutable copy of current_load so we can track within-upload fills
+    const bins = binsRes.rows.map(b => ({ ...b, current_load: parseFloat(b.current_load)||0 }));
+
+    let added = 0, skipped = 0;
+    const errors = [];
+
+    for (const row of rows) {
+      const name     = (row.name || '').trim();
+      const qty      = parseInt(row.quantity) || 0;
+      const size     = parseFloat(row.size) || 0;
+      const weight   = parseFloat(row.weight) || 0;
+      const priority = (row.priority || 'Medium').trim();
+      const rowWh    = (row.warehouse || '').trim().toLowerCase();
+
+      // Skip if name empty
+      if (!name || qty < 1 || size <= 0) { skipped++; errors.push(`Row skipped: invalid data (name=${name})`); continue; }
+
+      // Skip if warehouse name provided and doesn't match (case-insensitive)
+      if (rowWh && rowWh !== whName.toLowerCase()) {
+        skipped++;
+        errors.push(`"${name}" skipped: warehouse "${row.warehouse}" doesn't match "${whName}"`);
+        continue;
+      }
+
+      const itemWeight = size * qty;
+
+      // Best-fit
+      let bestBin = null, tightestFit = Infinity;
+      for (const b of bins) {
+        const remain = parseFloat(b.capacity) - b.current_load;
+        if (remain >= itemWeight && (remain - itemWeight) < tightestFit) {
+          tightestFit = remain - itemWeight;
+          bestBin = b;
+        }
+      }
+      if (!bestBin) { skipped++; errors.push(`"${name}" skipped: no bin with ${itemWeight.toFixed(2)} m³ free`); continue; }
+
+      let prioInt = 1;
+      if (priority.toLowerCase() === 'high') prioInt = 2;
+      if (priority.toLowerCase() === 'low')  prioInt = 0;
+
+      await db.query(
+        `INSERT INTO products (name, size, weight, quantity, priority, warehouse, company_name, bin_id, rack_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [name, size, weight, qty, prioInt, whName, compName, bestBin.bin_id, bestBin.rack_id]
+      );
+      await db.query('UPDATE bins SET current_load = current_load + $1 WHERE bin_id = $2', [itemWeight, bestBin.bin_id]);
+
+      // Update local tracking so subsequent rows see updated load
+      bestBin.current_load += itemWeight;
+      added++;
+    }
+
+    if (added > 0) {
+      await db.query(
+        'INSERT INTO activity_log (action, detail, user_id) VALUES ($1,$2,$3)',
+        ['CSV Import', `${added} product(s) added to ${whName}`, req.session.userId || null]
+      );
+    }
+
+    return res.json({ success: true, added, skipped, errors });
+  } catch (err) {
+    console.error('Bulk add error:', err);
+    return res.json({ success: false, error: err.message });
+  }
 });
 
 // Per-warehouse inventory list

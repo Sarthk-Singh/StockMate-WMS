@@ -224,10 +224,13 @@ summary.rack-summary::-webkit-details-marker { display: none; }
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
                 <a href="/inventory/<%= w.id %>" class="btn-primary" style="text-align:center; text-decoration:none; padding:9px; font-size:13px;">
                     <i class="fa-solid fa-boxes-stacked"></i> View Inventory
                 </a>
+                <button class="btn-outlined" style="font-size:13px;" onclick="openAddProductModal('<%= w.id %>', '<%= w.name %>')">
+                    <i class="fa-solid fa-plus"></i> Add Products
+                </button>
                 <button class="btn-outlined" style="font-size:13px;" onclick="window.location.href='/makeInv'">
                     <i class="fa-solid fa-sliders"></i> Manage
                 </button>
@@ -445,6 +448,327 @@ summary.rack-summary::-webkit-details-marker { display: none; }
         if(el) el.addEventListener('input', updateModalPreview);
     });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ADD PRODUCT MODAL (per warehouse, single + CSV bulk upload) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="addProductModal" style="display:none;">
+    <div class="modal-box" style="max-width:560px; width:100%;">
+
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1.5rem;">
+            <div>
+                <div style="font-size:16px; font-weight:500; color:var(--text-primary);">Add Products</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" id="apWhLabel">Select a warehouse first</div>
+            </div>
+            <button onclick="closeAddProductModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1.5rem;">
+            <button id="tabSingle" onclick="switchTab('single')" class="btn-primary" style="font-size:13px; padding:8px;">
+                <i class="fa-solid fa-plus"></i> Add Single Product
+            </button>
+            <button id="tabCSV" onclick="switchTab('csv')" class="btn-outlined" style="font-size:13px; padding:8px;">
+                <i class="fa-solid fa-file-csv"></i> Bulk CSV Upload
+            </button>
+        </div>
+
+        <!-- ── SINGLE PRODUCT FORM ─────────────────────────────── -->
+        <div id="panelSingle">
+            <div id="singleResult" style="display:none; padding:10px 14px; border-radius:8px; margin-bottom:1rem; font-size:13px;"></div>
+            <form id="singleForm" style="display:flex; flex-direction:column; gap:12px;">
+                <input type="hidden" id="spWarehouseId">
+                <div class="form-group">
+                    <label>Product Name <span style="color:var(--danger);">*</span></label>
+                    <input type="text" class="form-input" id="spName" placeholder="e.g. Steel Bearings" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Quantity <span style="color:var(--danger);">*</span></label>
+                        <input type="number" class="form-input" id="spQty" min="1" placeholder="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-input" id="spPriority">
+                            <option value="High">High</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Size (m²/unit) <span style="color:var(--danger);">*</span></label>
+                        <input type="number" class="form-input" id="spSize" step="any" min="0.01" placeholder="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (kg/unit)</label>
+                        <input type="number" class="form-input" id="spWeight" step="any" min="0" placeholder="2.0">
+                    </div>
+                </div>
+                <!-- Live space preview -->
+                <div id="spPreview" style="display:none; background:#f8fafc; border:1px solid var(--border-color); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--text-secondary);">
+                    <i class="fa-solid fa-bolt" style="color:var(--primary-accent);"></i>
+                    Space required: <strong id="spSpaceVal">—</strong> m³ &nbsp;|&nbsp; Knapsack will find best bin automatically.
+                </div>
+                <button type="button" onclick="submitSingleProduct()" class="btn-primary" style="width:100%;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Add to Warehouse
+                </button>
+            </form>
+        </div>
+
+        <!-- ── CSV BULK UPLOAD ─────────────────────────────────── -->
+        <div id="panelCSV" style="display:none; flex-direction:column; gap:14px;">
+            <!-- Template download -->
+            <div style="background:#EFF6FF; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div>
+                    <div style="font-size:13px; font-weight:500; color:#1e40af;">CSV Template</div>
+                    <div style="font-size:12px; color:#3b82f6; margin-top:2px;">name, quantity, size, weight, priority (High/Medium/Low), warehouse</div>
+                </div>
+                <a href="/inventory/csv-template" download="stockmate_template.csv" class="btn-outlined" style="text-decoration:none; font-size:12px; white-space:nowrap; padding:7px 12px;">
+                    <i class="fa-solid fa-download"></i> Download
+                </a>
+            </div>
+
+            <div id="csvResult" style="display:none; padding:10px 14px; border-radius:8px; font-size:13px;"></div>
+
+            <!-- Drop zone -->
+            <div id="csvDropZone" style="border:2px dashed var(--border-color); border-radius:10px; padding:2rem; text-align:center; cursor:pointer; transition:all 200ms ease; position:relative;">
+                <i class="fa-solid fa-file-arrow-up" style="font-size:28px; color:var(--text-muted); margin-bottom:10px; display:block;"></i>
+                <div style="font-size:14px; font-weight:500; color:var(--text-primary);">Drop your CSV file here</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">or click to browse</div>
+                <input type="file" id="csvFileInput" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+            </div>
+            <div id="csvFileName" style="font-size:12px; color:var(--text-muted); display:none;">
+                <i class="fa-solid fa-file-csv" style="color:var(--success);"></i> <span id="csvFileNameText"></span>
+            </div>
+
+            <!-- Preview table -->
+            <div id="csvPreviewWrap" style="display:none;">
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Preview (first 5 rows):</div>
+                <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:8px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr id="csvPreviewHead" style="background:#f8fafc;"></tr>
+                        </thead>
+                        <tbody id="csvPreviewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button type="button" id="csvSubmitBtn" onclick="submitCSV()" class="btn-primary" style="width:100%; display:none;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Allocate All Products
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+#csvDropZone.drag-over {
+    border-color: var(--primary-accent);
+    background: #EFF6FF;
+}
+</style>
+
+<script>
+// ── Add Product Modal ────────────────────────────────────────
+let _activeWarehouseId = null;
+
+function openAddProductModal(warehouseId, warehouseName) {
+    _activeWarehouseId = warehouseId;
+    document.getElementById('spWarehouseId').value = warehouseId;
+    document.getElementById('apWhLabel').textContent = 'Warehouse: ' + warehouseName;
+    document.getElementById('addProductModal').style.display = 'flex';
+    switchTab('single');
+    // reset
+    document.getElementById('singleForm').reset();
+    document.getElementById('singleResult').style.display = 'none';
+    document.getElementById('csvResult').style.display = 'none';
+    document.getElementById('csvPreviewWrap').style.display = 'none';
+    document.getElementById('csvSubmitBtn').style.display = 'none';
+    document.getElementById('csvFileName').style.display = 'none';
+    document.getElementById('spPreview').style.display = 'none';
+    document.getElementById('csvFileInput').value = '';
+    _csvRows = [];
+}
+function closeAddProductModal() {
+    document.getElementById('addProductModal').style.display = 'none';
+}
+document.getElementById('addProductModal').addEventListener('click', function(e) {
+    if(e.target === this) closeAddProductModal();
+});
+document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeAddProductModal();
+});
+
+function switchTab(tab) {
+    const isSingle = tab === 'single';
+    document.getElementById('panelSingle').style.display = isSingle ? 'block' : 'none';
+    document.getElementById('panelCSV').style.display = isSingle ? 'none' : 'flex';
+    document.getElementById('tabSingle').className = isSingle ? 'btn-primary' : 'btn-outlined';
+    document.getElementById('tabCSV').className   = isSingle ? 'btn-outlined' : 'btn-primary';
+}
+
+// ── Live space estimation ────────────────────────────────────
+['spSize','spQty'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', () => {
+        const size = parseFloat(document.getElementById('spSize').value)||0;
+        const qty  = parseInt(document.getElementById('spQty').value)||0;
+        const req  = size * qty;
+        const prev = document.getElementById('spPreview');
+        if(req > 0) {
+            document.getElementById('spSpaceVal').textContent = req.toFixed(3);
+            prev.style.display = 'block';
+        } else {
+            prev.style.display = 'none';
+        }
+    });
+});
+
+// ── Single product submit ────────────────────────────────────
+async function submitSingleProduct() {
+    const name     = document.getElementById('spName').value.trim();
+    const qty      = parseInt(document.getElementById('spQty').value)||0;
+    const priority = document.getElementById('spPriority').value;
+    const size     = parseFloat(document.getElementById('spSize').value)||0;
+    const weight   = parseFloat(document.getElementById('spWeight').value)||0;
+    const wid      = document.getElementById('spWarehouseId').value;
+
+    if(!name || qty < 1 || size <= 0) {
+        showSingleResult('error', 'Please fill in Name, Quantity, and Size.');
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Allocating...';
+
+    try {
+        const r = await fetch('/inventory/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, quantity: qty, priority, size, weight, warehouse_id: wid })
+        });
+        const data = await r.json();
+        if(data.success) {
+            showSingleResult('success', `✓ "${name}" added to Bin ${data.binAssigned}. Space remaining: ${parseFloat(data.remainingSpace).toFixed(2)} m³`);
+            document.getElementById('singleForm').reset();
+            document.getElementById('spPreview').style.display = 'none';
+        } else {
+            showSingleResult('error', '✗ ' + (data.error || 'Could not add product'));
+        }
+    } catch(e) {
+        showSingleResult('error', '✗ Network error: ' + e.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Add to Warehouse';
+}
+
+function showSingleResult(type, msg) {
+    const el = document.getElementById('singleResult');
+    el.style.display = 'block';
+    el.style.background = type === 'success' ? '#f0fdf4' : '#fef2f2';
+    el.style.color       = type === 'success' ? '#166534' : '#991b1b';
+    el.style.border      = '1px solid ' + (type === 'success' ? '#bbf7d0' : '#fecaca');
+    el.textContent = msg;
+}
+
+// ── CSV Upload ───────────────────────────────────────────────
+let _csvRows = [];
+const dropZone = document.getElementById('csvDropZone');
+const fileInput = document.getElementById('csvFileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if(file) handleCSVFile(file);
+});
+fileInput.addEventListener('change', () => {
+    if(fileInput.files[0]) handleCSVFile(fileInput.files[0]);
+});
+
+function handleCSVFile(file) {
+    document.getElementById('csvFileName').style.display = 'block';
+    document.getElementById('csvFileNameText').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+    const reader = new FileReader();
+    reader.onload = e => parseCSVPreview(e.target.result);
+    reader.readAsText(file);
+}
+
+function parseCSVPreview(text) {
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if(lines.length < 2) { showCSVResult('error', 'CSV must have a header row + at least one data row.'); return; }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    _csvRows = [];
+    for(let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const row = {};
+        headers.forEach((h, idx) => row[h] = vals[idx] || '');
+        _csvRows.push(row);
+    }
+
+    // Show preview
+    const head = document.getElementById('csvPreviewHead');
+    head.innerHTML = headers.map(h => `<th style="padding:6px 10px;text-align:left;text-transform:uppercase;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-color);">${h}</th>`).join('');
+    const body = document.getElementById('csvPreviewBody');
+    body.innerHTML = _csvRows.slice(0, 5).map(row =>
+        `<tr>${headers.map(h => `<td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${row[h]||'—'}</td>`).join('')}</tr>`
+    ).join('');
+    document.getElementById('csvPreviewWrap').style.display = 'block';
+    document.getElementById('csvSubmitBtn').style.display = 'block';
+    showCSVResult('info', `${_csvRows.length} rows detected. Click Upload to begin allocation.`);
+}
+
+function showCSVResult(type, msg) {
+    const el = document.getElementById('csvResult');
+    el.style.display = 'block';
+    const colors = {
+        success: ['#f0fdf4','#166534','#bbf7d0'],
+        error:   ['#fef2f2','#991b1b','#fecaca'],
+        info:    ['#EFF6FF','#1e40af','#bfdbfe']
+    };
+    const [bg,col,border] = colors[type] || colors.info;
+    el.style.background = bg; el.style.color = col; el.style.border = `1px solid ${border}`;
+    el.textContent = msg;
+}
+
+async function submitCSV() {
+    if(!_csvRows.length) return;
+    const btn = document.getElementById('csvSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
+    try {
+        const r = await fetch('/inventory/bulk-add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rows: _csvRows, warehouse_id: _activeWarehouseId })
+        });
+        const data = await r.json();
+        if(data.success) {
+            let msg = `✓ ${data.added} product(s) added.`;
+            if(data.skipped > 0) msg += ` ${data.skipped} skipped (warehouse mismatch or no space).`;
+            if(data.errors && data.errors.length) msg += '\nSkip reasons: ' + data.errors.slice(0,3).join('; ');
+            showCSVResult('success', msg);
+            document.getElementById('csvSubmitBtn').style.display = 'none';
+        } else {
+            showCSVResult('error', '✗ ' + (data.error || 'Upload failed'));
+        }
+    } catch(e) {
+        showCSVResult('error', '✗ Network error: ' + e.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload & Allocate All Products';
+}
+</script>
 </body>
 </html>
+
 

@@ -149,40 +149,44 @@ app.get("/inventory/:warehouseId", requireAuth, async (req, res) => {
     const warehouseId = parseInt(req.params.warehouseId);
     if (!warehouseId) return res.status(400).send('Missing warehouse ID');
 
-    // Fetch warehouse details
-    const whRes = await db.query(
-      `SELECT w.warehouse_id, w.name, w.length, w.width, w.height, w.usable_space,
-              COUNT(DISTINCT r.rack_id) AS rack_count,
-              COUNT(DISTINCT b.bin_id) AS total_bins,
-              COUNT(DISTINCT CASE WHEN b.current_load = 0 THEN b.bin_id END) AS free_bins,
-              COALESCE(SUM(b.capacity),0) AS total_capacity,
-              COALESCE(SUM(b.current_load),0) AS total_used
-       FROM warehouse w
-       LEFT JOIN racks r ON r.warehouse_id = w.warehouse_id
-       LEFT JOIN bins b ON b.rack_id = r.rack_id
-       WHERE w.warehouse_id = $1 AND w.company_name = $2
-       GROUP BY w.warehouse_id`, [warehouseId, company]
-    );
+    // Fetch warehouse + real stats
+    const whRes = await db.query(`
+      SELECT w.warehouse_id, w.name,
+             COUNT(DISTINCT r.rack_id) AS rack_count,
+             COUNT(DISTINCT b.bin_id) AS total_bins,
+             COUNT(DISTINCT CASE WHEN b.current_load = 0 THEN b.bin_id END) AS free_bins,
+             COALESCE(SUM(b.capacity),0) AS total_capacity,
+             COALESCE(SUM(b.current_load),0) AS total_used
+      FROM warehouse w
+      LEFT JOIN racks r ON r.warehouse_id = w.warehouse_id
+      LEFT JOIN bins b ON b.rack_id = r.rack_id
+      WHERE w.warehouse_id = $1 AND w.company_name = $2
+      GROUP BY w.warehouse_id
+    `, [warehouseId, company]);
     if (!whRes.rows.length) return res.status(404).send('Warehouse not found');
     const wh = whRes.rows[0];
     const cap  = parseFloat(wh.total_capacity) || 0;
     const used = parseFloat(wh.total_used) || 0;
     const util = cap > 0 ? Math.round((used / cap) * 100) : 0;
 
-    // Fetch all products in this warehouse
+    // Fetch products — using ONLY real schema columns
     const prodRes = await db.query(`
-      SELECT p.product_id, p.name, p.sku, p.category, p.quantity, p.priority,
-             p.weight, p.size, p.bin_id,
-             b.bin_id as b_id,
-             r.name as rack_name, r.rack_id
+      SELECT p.product_id, p.name, p.weight, p.size, p.quantity, p.priority,
+             p.inserted_at, p.bin_id, p.rack_id,
+             r.name AS rack_name
       FROM products p
       JOIN bins b ON p.bin_id = b.bin_id
       JOIN racks r ON b.rack_id = r.rack_id
       WHERE r.warehouse_id = $1
-      ORDER BY
-        CASE p.priority WHEN 'High' THEN 1 WHEN 'Medium' THEN 2 WHEN 'Normal' THEN 2 ELSE 3 END,
-        p.name
+      ORDER BY p.priority DESC, p.name
     `, [warehouseId]);
+
+    // Map priority integer to label
+    const prioLabel = { 2: 'High', 1: 'Medium', 0: 'Low' };
+    const products = prodRes.rows.map(p => ({
+      ...p,
+      priorityLabel: prioLabel[p.priority] || 'Medium'
+    }));
 
     res.render('productList', {
       warehouse: {
@@ -194,16 +198,48 @@ app.get("/inventory/:warehouseId", requireAuth, async (req, res) => {
         utilPercent: util,
         availSqft:   Math.round(cap - used)
       },
-      products: prodRes.rows
+      products
     });
   } catch (err) {
     console.error('Inventory error:', err);
-    res.status(500).send('Server error');
+    res.status(500).send('Server error: ' + err.message);
   }
 });
 
-// Redirect plain /inventory to warehouse picker
-app.get('/inventory', requireAuth, (req, res) => res.redirect('/warehouse'));
+// All-products inventory page (global, across all warehouses for this company)
+app.get('/inventory', requireAuth, async (req, res) => {
+  try {
+    const company = req.session.company_name || req.session.companyName;
+
+    const prodRes = await db.query(`
+      SELECT p.product_id, p.name, p.weight, p.size, p.quantity, p.priority,
+             p.warehouse, p.inserted_at, p.bin_id, p.rack_id,
+             r.name AS rack_name,
+             w.name AS warehouse_name, w.warehouse_id
+      FROM products p
+      JOIN bins b ON p.bin_id = b.bin_id
+      JOIN racks r ON b.rack_id = r.rack_id
+      JOIN warehouse w ON r.warehouse_id = w.warehouse_id
+      WHERE p.company_name = $1
+      ORDER BY p.priority DESC, p.name
+    `, [company]);
+
+    const prioLabel = { 2: 'High', 1: 'Medium', 0: 'Low' };
+    const products = prodRes.rows.map(p => ({
+      ...p,
+      priorityLabel: prioLabel[p.priority] || 'Medium'
+    }));
+
+    // Summary stats
+    const totalProducts = products.length;
+    const lowStock = products.filter(p => p.quantity <= 10).length;
+
+    res.render('inventoryAll', { products, totalProducts, lowStock, company });
+  } catch (err) {
+    console.error('Global inventory error:', err);
+    res.status(500).send('Server error: ' + err.message);
+  }
+});
 
 app.get("/reports", requireAuth, (req, res) => {
   res.render("underConstruction.ejs");

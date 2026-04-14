@@ -7,8 +7,6 @@
     margin: 0 auto;
     padding: 2rem 0 4rem;
 }
-
-/* Back + header */
 .inv-header {
     display: flex;
     align-items: center;
@@ -16,23 +14,18 @@
     margin-bottom: 2rem;
 }
 .back-btn {
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
     border: 1px solid var(--border-color);
     background: white;
     color: var(--text-primary);
-    cursor: pointer;
     text-decoration: none;
     flex-shrink: 0;
     transition: background 150ms ease;
 }
 .back-btn:hover { background: #f1f5f9; }
 
-/* Stats bar */
 .stats-bar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -45,26 +38,10 @@
     border-radius: 10px;
     padding: 1rem 1.25rem;
 }
-.stat-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-}
-.stat-val {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--primary-accent);
-}
-.stat-sub {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-}
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-val   { font-size: 22px; font-weight: 500; color: var(--primary-accent); }
+.stat-sub   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
-/* Capacity strip */
 .cap-strip {
     background: white;
     border: 1px solid var(--border-color);
@@ -75,12 +52,9 @@
     align-items: center;
     gap: 16px;
 }
-.cap-strip-label { font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
 .cap-strip-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
 .cap-strip-fill  { height: 100%; border-radius: 3px; }
-.cap-strip-pct   { font-size: 13px; font-weight: 500; color: var(--text-primary); flex-shrink: 0; }
 
-/* Toolbar */
 .toolbar {
     display: flex;
     justify-content: space-between;
@@ -91,111 +65,51 @@
 .toolbar-left { display: flex; gap: 10px; flex-grow: 1; }
 .search-wrapper { position: relative; flex: 1; max-width: 340px; }
 .search-wrapper input {
-    width: 100%;
-    padding: 9px 12px 9px 36px;
+    width: 100%; padding: 9px 12px 9px 36px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--text-primary);
-    box-sizing: border-box;
-    outline: none;
-    background: white;
+    border-radius: 8px; font-size: 14px;
+    box-sizing: border-box; outline: none; background: white;
 }
 .search-wrapper input:focus { border-color: var(--primary-accent); }
-.search-icon {
-    position: absolute;
-    left: 12px; top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 13px;
-}
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
 .filter-select {
     padding: 9px 12px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    background: white;
-    cursor: pointer;
-    outline: none;
+    border-radius: 8px; font-size: 13px;
+    color: var(--text-secondary); background: white; cursor: pointer; outline: none;
 }
 
-/* Table */
-.table-card {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
-}
+.table-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
 th {
-    background: #f8fafc;
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 12px;
-    text-align: left;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    background: #f8fafc; color: var(--text-secondary);
+    font-weight: 500; font-size: 12px; text-align: left;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase; letter-spacing: 0.4px;
 }
-td {
-    padding: 14px 16px;
-    font-size: 14px;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-color);
-}
+td { padding: 14px 16px; font-size: 14px; color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
 tbody tr { transition: background 150ms ease; }
 tbody tr:hover { background: #f8fafc; }
 tbody tr:last-child td { border-bottom: none; }
 
-.badge {
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-block;
-}
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; display: inline-block; }
 .badge-high   { background: #fef2f2; color: var(--danger); }
 .badge-medium { background: #fffbeb; color: var(--warning); }
 .badge-low    { background: #f0fdf4; color: var(--success); }
 
 .location-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: #EFF6FF;
-    color: #185FA5;
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 12px;
-    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #EFF6FF; color: #185FA5;
+    border-radius: 6px; padding: 3px 8px;
+    font-size: 12px; font-weight: 500;
 }
 
-.action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 15px;
-    color: var(--text-secondary);
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: all 150ms ease;
-}
-.action-btn:hover { color: var(--primary-accent); background: #EFF6FF; }
-.action-btn.del:hover { color: var(--danger); background: #fef2f2; }
-
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--text-muted);
-}
-.empty-state .empty-icon { font-size: 40px; margin-bottom: 1rem; opacity: 0.3; }
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+.empty-icon  { font-size: 40px; margin-bottom: 1rem; opacity: 0.3; }
 </style>
 
 <div class="inv-container">
 
-    <!-- Header -->
     <div class="inv-header">
         <a href="/warehouse" class="back-btn" title="Back to Warehouses">
             <i class="fa-solid fa-arrow-left" style="font-size:13px;"></i>
@@ -204,24 +118,16 @@ tbody tr:last-child td { border-bottom: none; }
             <h1 style="font-size:20px; font-weight:500; margin:0; color:var(--text-primary);">
                 <% if(warehouse) { %><%= warehouse.name %><% } else { %>Inventory<% } %>
             </h1>
-            <p style="font-size:13px; color:var(--text-muted); margin:2px 0 0;">
-                All products stored in this warehouse
-            </p>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-outlined" onclick="window.location.href='/warehouse'" style="font-size:13px;">
-                <i class="fa-solid fa-warehouse"></i> All Warehouses
-            </button>
+            <p style="font-size:13px; color:var(--text-muted); margin:2px 0 0;">Products stored in this warehouse</p>
         </div>
     </div>
 
     <% if(warehouse) { %>
-    <!-- Stats Bar (real data from DB) -->
     <div class="stats-bar">
         <div class="stat-card">
-            <div class="stat-label">Total Products</div>
+            <div class="stat-label">Products</div>
             <div class="stat-val"><%= products ? products.length : 0 %></div>
-            <div class="stat-sub">items in this warehouse</div>
+            <div class="stat-sub">items allocated</div>
         </div>
         <div class="stat-card">
             <div class="stat-label">Racks</div>
@@ -229,138 +135,117 @@ tbody tr:last-child td { border-bottom: none; }
             <div class="stat-sub">physical rack units</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Total Bins</div>
+            <div class="stat-label">Bins</div>
             <div class="stat-val"><%= warehouse.totalBins %></div>
-            <div class="stat-sub"><%= warehouse.freeBins %> bins currently free</div>
+            <div class="stat-sub"><%= warehouse.freeBins %> free</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Space Utilization</div>
+            <div class="stat-label">Utilization</div>
             <div class="stat-val" style="color:<%= warehouse.utilPercent > 85 ? 'var(--danger)' : warehouse.utilPercent > 65 ? 'var(--warning)' : 'var(--primary-accent)' %>">
                 <%= warehouse.utilPercent %>%
             </div>
-            <div class="stat-sub"><%= warehouse.availSqft %> m³ remaining</div>
+            <div class="stat-sub"><%= warehouse.availSqft %> m³ free</div>
         </div>
     </div>
-
-    <!-- Capacity Bar -->
     <div class="cap-strip">
-        <span class="cap-strip-label">Warehouse Capacity</span>
+        <span style="font-size:13px; color:var(--text-secondary); flex-shrink:0;">Capacity</span>
         <div class="cap-strip-track">
             <div class="cap-strip-fill" style="width:<%= warehouse.utilPercent %>%; background:<%= warehouse.utilPercent > 85 ? 'var(--danger)' : warehouse.utilPercent > 65 ? 'var(--warning)' : 'var(--primary-accent)' %>;"></div>
         </div>
-        <span class="cap-strip-pct"><%= warehouse.utilPercent %>% full</span>
-        <span style="font-size:12px; color:<%= warehouse.utilPercent > 85 ? 'var(--danger)' : warehouse.utilPercent > 65 ? 'var(--warning)' : 'var(--success)' %>; font-weight:500;">
-            <%= warehouse.utilPercent > 85 ? 'Critical' : warehouse.utilPercent > 65 ? 'Moderate' : 'Healthy' %>
-        </span>
+        <span style="font-size:13px; font-weight:500; flex-shrink:0;"><%= warehouse.utilPercent %>%</span>
     </div>
     <% } %>
 
-    <!-- Toolbar -->
     <div class="toolbar">
         <div class="toolbar-left">
             <div class="search-wrapper">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Search by name, SKU, rack...">
+                <input type="text" id="searchInput" placeholder="Search by name, rack...">
             </div>
             <select class="filter-select" id="priorityFilter">
                 <option value="">Priority: All</option>
                 <option value="High">High</option>
                 <option value="Medium">Medium</option>
-                <option value="Normal">Normal</option>
                 <option value="Low">Low</option>
             </select>
         </div>
-        <div style="display:flex; gap:10px;">
-            <span style="font-size:13px; color:var(--text-muted); align-self:center;" id="rowCount">
-                <% if(products && products.length > 0) { %><%= products.length %> items<% } %>
-            </span>
-        </div>
+        <span style="font-size:13px; color:var(--text-muted);" id="rowCount">
+            <% if(products && products.length > 0) { %><%= products.length %> items<% } %>
+        </span>
     </div>
 
-    <!-- Product Table -->
     <div class="table-card">
         <table>
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Product Name</th>
-                    <th>SKU</th>
-                    <th>Category</th>
                     <th>Qty</th>
                     <th>Priority</th>
                     <th>Location</th>
-                    <th>Size</th>
-                    <th>Actions</th>
+                    <th>Size (m²)</th>
+                    <th>Weight (kg)</th>
                 </tr>
             </thead>
             <tbody id="productTable">
-                <% if (products && products.length > 0) { %>
-                    <% products.forEach(function(p) {
-                        const prio = p.priority || 'Normal';
-                        const badgeClass = prio === 'High' ? 'badge-high' : prio === 'Low' ? 'badge-low' : 'badge-medium';
-                        const skuDisplay = p.sku || ('PRD-' + p.product_id.toString().padStart(4,'0'));
-                    %>
-                    <tr data-priority="<%= prio %>" data-text="<%= (p.name + ' ' + skuDisplay + ' ' + (p.category||'') + ' ' + (p.rack_name||'')).toLowerCase() %>">
-                        <td><strong><%= p.name %></strong></td>
-                        <td style="color:#64748b; font-family:monospace; font-size:13px;"><%= skuDisplay %></td>
-                        <td><%= p.category || '—' %></td>
-                        <td>
-                            <span style="font-weight:500; <%= p.quantity <= 10 ? 'color:var(--danger);' : '' %>">
-                                <%= p.quantity %>
-                            </span>
-                            <% if(p.quantity <= 10) { %><span style="font-size:11px; color:var(--warning); margin-left:4px;">⚠ low</span><% } %>
-                        </td>
-                        <td><span class="badge <%= badgeClass %>"><%= prio %></span></td>
-                        <td>
-                            <span class="location-pill">
-                                <i class="fa-solid fa-location-dot" style="font-size:10px;"></i>
-                                <%= p.rack_name || 'Rack ' + p.rack_id %> / Bin <%= p.bin_id %>
-                            </span>
-                        </td>
-                        <td style="color:var(--text-secondary); font-size:13px;"><%= p.size ? p.size + ' sqft' : '—' %></td>
-                        <td>
-                            <button class="action-btn" title="View details" onclick="alert('Product: <%= p.name %>\nSKU: <%= skuDisplay %>\nQuantity: <%= p.quantity %>\nLocation: <%= p.rack_name || p.rack_id %> / Bin <%= p.bin_id %>')">
-                                <i class="fa-regular fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <% }) %>
-                <% } else { %>
-                    <tr>
-                        <td colspan="8">
-                            <div class="empty-state">
-                                <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
-                                <div style="font-size:16px; font-weight:500; color:var(--text-primary); margin-bottom:8px;">No products in this warehouse yet</div>
-                                <div style="font-size:13px; line-height:1.6;">
-                                    Use <strong>Add Product</strong> on the Dashboard to stock this warehouse using the Knapsack allocator.
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                <% } %>
+            <% if (products && products.length > 0) { %>
+                <% products.forEach(function(p, i) {
+                    const prio = p.priorityLabel || 'Medium';
+                    const badgeClass = prio === 'High' ? 'badge-high' : prio === 'Low' ? 'badge-low' : 'badge-medium';
+                    const searchText = (p.name + ' ' + (p.rack_name||'') + ' bin ' + p.bin_id).toLowerCase();
+                %>
+                <tr data-priority="<%= prio %>" data-text="<%= searchText %>">
+                    <td style="color:var(--text-muted); font-size:12px;"><%= String(i+1).padStart(2,'0') %></td>
+                    <td><strong><%= p.name %></strong></td>
+                    <td>
+                        <span style="font-weight:500; <%= p.quantity <= 10 ? 'color:var(--danger);' : '' %>"><%= p.quantity %></span>
+                        <% if(p.quantity <= 10) { %><span style="font-size:11px; color:var(--warning); margin-left:4px;">⚠</span><% } %>
+                    </td>
+                    <td><span class="badge <%= badgeClass %>"><%= prio %></span></td>
+                    <td>
+                        <span class="location-pill">
+                            <i class="fa-solid fa-location-dot" style="font-size:10px;"></i>
+                            <%= p.rack_name || ('Rack ' + p.rack_id) %> &bull; Bin <%= p.bin_id %>
+                        </span>
+                    </td>
+                    <td style="color:var(--text-secondary); font-size:13px;"><%= p.size || '—' %></td>
+                    <td style="color:var(--text-secondary); font-size:13px;"><%= p.weight || '—' %></td>
+                </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+                            <div style="font-size:16px; font-weight:500; color:var(--text-primary); margin-bottom:8px;">No products in this warehouse</div>
+                            <div style="font-size:13px;">Use <strong>Add Product</strong> on the dashboard to stock this warehouse.</div>
+                        </div>
+                    </td>
+                </tr>
+            <% } %>
             </tbody>
         </table>
-
         <% if(products && products.length > 0) { %>
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--border-color); font-size:13px; color:var(--text-secondary);">
-            <span>Showing <strong id="visibleCount"><%= products.length %></strong> of <strong><%= products.length %></strong> items</span>
+        <div style="padding:12px 16px; border-top:1px solid var(--border-color); font-size:13px; color:var(--text-secondary);">
+            Showing <strong id="visibleCount"><%= products.length %></strong> of <strong><%= products.length %></strong> items
         </div>
         <% } %>
     </div>
 </div>
 
 <script>
-    const searchInput   = document.getElementById('searchInput');
+    const searchInput    = document.getElementById('searchInput');
     const priorityFilter = document.getElementById('priorityFilter');
     const rows = document.querySelectorAll('#productTable tr[data-text]');
 
     function filterTable() {
-        const q = searchInput.value.toLowerCase();
-        const prio = priorityFilter.value.toLowerCase();
+        const q    = searchInput.value.toLowerCase();
+        const prio = priorityFilter.value;
         let visible = 0;
         rows.forEach(row => {
-            const textMatch  = !q    || row.dataset.text.includes(q);
-            const prioMatch  = !prio || row.dataset.priority.toLowerCase() === prio;
-            const show = textMatch && prioMatch;
+            const textOk = !q    || row.dataset.text.includes(q);
+            const prioOk = !prio || row.dataset.priority === prio;
+            const show = textOk && prioOk;
             row.style.display = show ? '' : 'none';
             if(show) visible++;
         });
@@ -368,6 +253,6 @@ tbody tr:last-child td { border-bottom: none; }
         if(vc) vc.textContent = visible;
     }
 
-    searchInput.addEventListener('input', filterTable);
-    priorityFilter.addEventListener('change', filterTable);
+    if(searchInput)    searchInput.addEventListener('input', filterTable);
+    if(priorityFilter) priorityFilter.addEventListener('change', filterTable);
 </script>

@@ -95,15 +95,15 @@ module.exports = {
             // ── 4. Recent activity log (last 5 entries) ───────────────────────
             let activityLog = [];
             try {
-                // Try our apiController's activity_log table first
+                // activity_logs table (matches sql_file.txt schema)
                 const r = await pool.query(`
-                    SELECT action, detail, created_at FROM activity_log
+                    SELECT action, created_at FROM activity_logs
                     ORDER BY created_at DESC
                     LIMIT 5
                 `);
                 activityLog = r.rows.map(row => ({
                     action: row.action,
-                    detail: row.detail,
+                    detail: null,
                     timeAgo: timeAgo(row.created_at),
                     dotColor: dotColor(row.action)
                 }));

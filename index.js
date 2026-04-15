@@ -141,18 +141,10 @@ app.get("/storage", requireAuth, (req, res) => {
 
 // ──────────────────────────────────────────────────────────────
 // INVENTORY: CSV TEMPLATE DOWNLOAD
+// Must be registered BEFORE /inventory/:warehouseId (param route)
 // ──────────────────────────────────────────────────────────────
-app.get('/inventory/csv-template', requireAuth, (req, res) => {
-  const csv = [
-    'name,quantity,size,weight,priority,warehouse',
-    'Steel Bearings,100,0.5,2.0,High,Main Warehouse',
-    'Copper Tubing,50,1.2,4.5,Medium,Main Warehouse',
-    'Cardboard Boxes,200,0.8,0.3,Low,Main Warehouse'
-  ].join('\n');
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="stockmate_template.csv"');
-  res.send(csv);
-});
+// NOTE: route is intentionally defined here AND again below just before
+// the param route — this stub keeps the block comment in place.
 
 // ──────────────────────────────────────────────────────────────
 // INVENTORY: SINGLE PRODUCT ADD  (POST /inventory/add)
@@ -244,15 +236,18 @@ app.post('/inventory/bulk-add', requireAuth, async (req, res) => {
     const errors = [];
 
     for (const row of rows) {
-      const name     = (row.name || '').trim();
-      const qty      = parseInt(row.quantity) || 0;
-      const size     = parseFloat(row.size) || 0;
-      const weight   = parseFloat(row.weight) || 0;
+      // Support common column-name aliases so different exports still work
+      const name     = (row.name || row.product_name || row['product name'] || '').trim();
+      const qty      = parseInt(row.quantity || row.qty || row.count || 0);
+      const size     = parseFloat(row.size || row.sqft || row.sq_ft || row['size (m²/unit)'] || 0);
+      const weight   = parseFloat(row.weight || row['weight (kg/unit)'] || 0);
       const priority = (row.priority || 'Medium').trim();
       const rowWh    = (row.warehouse || '').trim().toLowerCase();
 
-      // Skip if name empty
-      if (!name || qty < 1 || size <= 0) { skipped++; errors.push(`Row skipped: invalid data (name=${name})`); continue; }
+      // Skip with specific reason so user knows exactly which field is wrong
+      if (!name)       { skipped++; errors.push(`Row skipped: missing/empty name`); continue; }
+      if (qty < 1)     { skipped++; errors.push(`"${name}" skipped: quantity must be ≥ 1 (got "${row.quantity || row.qty || ''}")`); continue; }
+      if (size <= 0)   { skipped++; errors.push(`"${name}" skipped: size must be > 0 (got "${row.size || row.sqft || ''}")`); continue; }
 
       // Skip if warehouse name provided and doesn't match (case-insensitive)
       if (rowWh && rowWh !== whName.toLowerCase()) {
@@ -302,6 +297,23 @@ app.post('/inventory/bulk-add', requireAuth, async (req, res) => {
     console.error('Bulk add error:', err);
     return res.json({ success: false, error: err.message });
   }
+});
+
+// ──────────────────────────────────────────────────────────────
+// INVENTORY: CSV TEMPLATE DOWNLOAD  (MUST be before /:warehouseId)
+// ──────────────────────────────────────────────────────────────
+app.get('/inventory/template', requireAuth, (req, res) => {
+  if (!req.session || !req.session.userId) return res.redirect('/login');
+  // Headers must match exactly what the bulk-add route reads
+  const lines = [
+    'name,quantity,size,weight,priority,warehouse',
+    'Steel Bearings,100,0.5,2.0,High,My Warehouse',
+    'Copper Tubing,50,1.2,4.5,Medium,My Warehouse',
+    'Cardboard Boxes,200,0.8,0.3,Low,My Warehouse'
+  ];
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="stockmate_template.csv"');
+  res.send(lines.join('\n') + '\n');
 });
 
 // Per-warehouse inventory list

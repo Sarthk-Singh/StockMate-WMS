@@ -398,7 +398,7 @@
                     <div style="font-size:13px; font-weight:500; color:#1e40af;">CSV Template</div>
                     <div style="font-size:12px; color:#3b82f6; margin-top:2px;">name, quantity, size, weight, priority (High/Medium/Low), warehouse</div>
                 </div>
-                <a href="/inventory/csv-template" download="stockmate_template.csv" class="btn-outlined" style="text-decoration:none; font-size:12px; white-space:nowrap; padding:7px 12px;">
+                <a href="/inventory/template" download="stockmate_template.csv" class="btn-outlined" style="text-decoration:none; font-size:12px; white-space:nowrap; padding:7px 12px;">
                     <i class="fa-solid fa-download"></i> Download
                 </a>
             </div>
@@ -750,7 +750,7 @@ function dashParseCSVPreview(text) {
     const lines = text.trim().split('\n').filter(l => l.trim());
     if (lines.length < 2) { dashShowCSVResult('error', 'CSV must have a header row + at least one data row.'); return; }
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const headers = lines[0].replace(/^\uFEFF/, '').split(',').map(h => h.trim().toLowerCase());
     _dashCsvRows = [];
     for (let i = 1; i < lines.length; i++) {
         const vals = lines[i].split(',').map(v => v.trim());

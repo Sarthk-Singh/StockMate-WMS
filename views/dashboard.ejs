@@ -178,7 +178,7 @@
             <p class="hero-subtitle">Here's what's happening in your warehouse today.</p>
         </div>
         <div class="hero-actions">
-            <button class="btn-primary" onclick="openModal('addModal')">Add Product</button>
+            <button class="btn-primary" onclick="openDashAddModal()">Add Product</button>
             <button class="btn-outlined" onclick="window.location.href='/makeInv'">Configure Warehouse</button>
         </div>
     </div>
@@ -264,7 +264,7 @@
     </div>
 
     <div class="quick-actions-row">
-        <div class="card action-card" onclick="openModal('addModal')">
+        <div class="card action-card" onclick="openDashAddModal()">
             <div class="action-icon"><i class="fa-solid fa-plus-circle"></i></div>
             <div class="action-title">Add New Product <span class="action-arrow">&rarr;</span></div>
             <div class="action-desc">Log incoming inventory using predictive capacity algos.</div>
@@ -283,76 +283,161 @@
 </div>
 
 <!-- ========================================== -->
-<!-- FEATURE 1: ADD PRODUCT MODAL -->
+<!-- FEATURE 1: ADD PRODUCT MODAL (Warehouse dropdown + Single/CSV tabs) -->
 <!-- ========================================== -->
-<div class="modal-overlay" id="addModal">
-    <div class="modal-box" style="position:relative;">
-        <button class="modal-close" onclick="closeModal('addModal')" style="position:absolute; top:1.5rem; right:1.5rem; background:none; border:none; font-size:20px; cursor:pointer;" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-        
-        <!-- Step 1: Select Warehouse -->
-        <div id="addStep1">
-            <div class="section-title" style="font-size:18px; margin-bottom:1.5rem; border:none;">Step 1: Select Target Warehouse</div>
-            <div id="whLoader" style="text-align:center; padding:2rem 0;"><i class="fa-solid fa-circle-notch fa-spin" style="color:#378ADD; font-size:24px;"></i></div>
-            <div id="whList" style="display:flex; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto; padding-right:8px;"></div>
+<div class="modal-overlay" id="addModal" style="display:none;">
+    <div class="modal-box" style="max-width:560px; width:100%; position:relative;">
+
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1.25rem;">
+            <div>
+                <div style="font-size:16px; font-weight:500; color:var(--text-primary);">Add Products</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Select a warehouse and add inventory</div>
+            </div>
+            <button onclick="closeModal('addModal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <!-- Step 2: Form -->
-        <div id="addStep2" style="display:none;">
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
-                <button type="button" onclick="goToAddStep(1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:16px;"><i class="fa-solid fa-arrow-left"></i></button>
-                <div class="section-title" style="font-size:18px; margin:0; border:none;">Add Product</div>
-                <span id="selWhBadge" style="background:#E6F1FB; color:#185FA5; font-size:11px; border-radius:99px; padding:2px 8px; font-weight:500;">--</span>
+        <!-- Warehouse Dropdown -->
+        <div class="form-group" style="margin-bottom:1.25rem;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+                <i class="fa-solid fa-warehouse" style="color:var(--primary-accent);"></i> Warehouse
+            </label>
+            <div style="position:relative;">
+                <select id="dashWhSelect" class="form-input" style="width:100%; padding:10px 12px 10px 36px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; box-sizing:border-box; background:#fff; appearance:none; cursor:pointer;" onchange="onDashWhChange()">
+                    <option value="">— Select a warehouse —</option>
+                </select>
+                <i class="fa-solid fa-warehouse" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--primary-accent); pointer-events:none; font-size:13px;"></i>
+                <i class="fa-solid fa-chevron-down" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; font-size:11px;"></i>
             </div>
-            
-            <form id="addForm">
-                <input type="hidden" id="addWarehouseId">
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Product Name</label>
-                    <input type="text" id="addName" class="form-input" required style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+            <!-- Capacity mini-bar for selected warehouse -->
+            <div id="dashWhCapBar" style="display:none; margin-top:8px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:8px 12px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); margin-bottom:5px;">
+                    <span id="dashWhCapLabel">Utilization</span>
+                    <span id="dashWhCapPct">0%</span>
                 </div>
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">SKU</label>
-                    <input type="text" id="addSku" class="form-input" required style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                <div style="height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden;">
+                    <div id="dashWhCapFill" style="height:100%; border-radius:3px; background:var(--primary-accent); width:0%; transition:width 300ms ease;"></div>
                 </div>
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Category</label>
-                    <input type="text" id="addCategory" class="form-input" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                <div style="font-size:11px; color:var(--text-muted); margin-top:5px;">Available: <strong id="dashWhAvailSpace" style="color:var(--text-primary);">—</strong> m³ &nbsp;|&nbsp; Free bins: <strong id="dashWhFreeBins" style="color:var(--text-primary);">—</strong></div>
+            </div>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1.25rem;">
+            <button id="dashTabSingle" onclick="dashSwitchTab('single')" class="btn-primary" style="font-size:13px; padding:8px;">
+                <i class="fa-solid fa-plus"></i> Add Single Product
+            </button>
+            <button id="dashTabCSV" onclick="dashSwitchTab('csv')" class="btn-outlined" style="font-size:13px; padding:8px;">
+                <i class="fa-solid fa-file-csv"></i> Bulk CSV Upload
+            </button>
+        </div>
+
+        <!-- ── SINGLE PRODUCT FORM ─────────────────────────────── -->
+        <div id="dashPanelSingle">
+            <div id="dashSingleResult" style="display:none; padding:10px 14px; border-radius:8px; margin-bottom:1rem; font-size:13px;"></div>
+            <form id="dashSingleForm" style="display:flex; flex-direction:column; gap:12px;">
+                <input type="hidden" id="dashSpWarehouseId">
+                <div class="form-group">
+                    <label>Product Name <span style="color:var(--danger);">*</span></label>
+                    <input type="text" class="form-input" id="dashSpName" placeholder="e.g. Steel Bearings" required>
                 </div>
-                
-                <div style="display:flex; gap:16px;">
-                    <div class="form-group" style="flex:1; margin-bottom:1rem;">
-                        <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Quantity</label>
-                        <input type="number" id="addQty" class="form-input" required min="1" value="1" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                <div class="form-group">
+                    <label>SKU</label>
+                    <input type="text" class="form-input" id="dashSpSku" placeholder="e.g. SKU-001">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Quantity <span style="color:var(--danger);">*</span></label>
+                        <input type="number" class="form-input" id="dashSpQty" min="1" placeholder="100" required>
                     </div>
-                    <div class="form-group" style="flex:1; margin-bottom:1rem;">
-                        <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Size (sq ft)</label>
-                        <input type="number" id="addSize" class="form-input" required min="0" step="0.1" value="1.0" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-input" id="dashSpPriority">
+                            <option value="High">High</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
                     </div>
                 </div>
-                
-                <div class="form-group" style="margin-bottom:1.5rem;">
-                    <label style="display:block; font-size:13px; color:#64748b; margin-bottom:6px;">Priority</label>
-                    <select id="addPriority" class="form-input" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:14px; box-sizing:border-box; background:#fff;">
-                        <option value="High">High</option>
-                        <option value="Medium" selected>Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Size (m²/unit) <span style="color:var(--danger);">*</span></label>
+                        <input type="number" class="form-input" id="dashSpSize" step="any" min="0.01" placeholder="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (kg/unit)</label>
+                        <input type="number" class="form-input" id="dashSpWeight" step="any" min="0" placeholder="2.0">
+                    </div>
                 </div>
-    
-                <!-- Predictive Panel -->
-                <div id="predictivePanel" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:1.5rem; font-size:13px; color:#334155;">
-                    <div style="font-weight:600; margin-bottom:8px; color:#0f172a;"><i class="fa-solid fa-chart-pie"></i> Predictive Capacity Preview</div>
+
+                <!-- Live space + capacity preview -->
+                <div id="dashSpPreview" style="display:none; background:#f8fafc; border:1px solid var(--border-color); border-radius:8px; padding:12px 14px; font-size:13px; color:var(--text-secondary);">
+                    <div style="font-weight:600; margin-bottom:8px; color:var(--text-primary);"><i class="fa-solid fa-chart-pie" style="color:var(--primary-accent);"></i> Predictive Capacity Preview</div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span>Space Required:</span> <strong id="predReq">1.0 sq ft</strong>
+                        <span>Space Required:</span>
+                        <strong id="dashSpSpaceVal" style="color:var(--text-primary);">—</strong>
                     </div>
-                    <div style="font-style:italic; font-size:12px; margin-top:8px; color:#64748b;">Knapsack resolver localizes to selected warehouse.</div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Warehouse Available:</span>
+                        <strong id="dashSpAvailVal" style="color:var(--success);">—</strong>
+                    </div>
+                    <div id="dashSpFitMsg" style="font-style:italic; font-size:12px; color:#64748b; margin-top:6px;">Knapsack resolver localizes to selected warehouse.</div>
                 </div>
-    
-                <button type="submit" id="addSubmitBtn" style="background:#378ADD; color:white; width:100%; padding:11px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;">Add & Allocate</button>
+
+                <button type="button" onclick="dashSubmitSingleProduct()" class="btn-primary" style="width:100%;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Add to Warehouse
+                </button>
             </form>
         </div>
+
+        <!-- ── CSV BULK UPLOAD ─────────────────────────────────── -->
+        <div id="dashPanelCSV" style="display:none; flex-direction:column; gap:14px;">
+            <!-- Template download -->
+            <div style="background:#EFF6FF; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div>
+                    <div style="font-size:13px; font-weight:500; color:#1e40af;">CSV Template</div>
+                    <div style="font-size:12px; color:#3b82f6; margin-top:2px;">name, quantity, size, weight, priority (High/Medium/Low), warehouse</div>
+                </div>
+                <a href="/inventory/csv-template" download="stockmate_template.csv" class="btn-outlined" style="text-decoration:none; font-size:12px; white-space:nowrap; padding:7px 12px;">
+                    <i class="fa-solid fa-download"></i> Download
+                </a>
+            </div>
+
+            <div id="dashCsvResult" style="display:none; padding:10px 14px; border-radius:8px; font-size:13px;"></div>
+
+            <!-- Drop zone -->
+            <div id="dashCsvDropZone" style="border:2px dashed var(--border-color); border-radius:10px; padding:2rem; text-align:center; cursor:pointer; transition:all 200ms ease; position:relative;">
+                <i class="fa-solid fa-file-arrow-up" style="font-size:28px; color:var(--text-muted); margin-bottom:10px; display:block;"></i>
+                <div style="font-size:14px; font-weight:500; color:var(--text-primary);">Drop your CSV file here</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">or click to browse</div>
+                <input type="file" id="dashCsvFileInput" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+            </div>
+            <div id="dashCsvFileName" style="font-size:12px; color:var(--text-muted); display:none;">
+                <i class="fa-solid fa-file-csv" style="color:var(--success);"></i> <span id="dashCsvFileNameText"></span>
+            </div>
+
+            <!-- Preview table -->
+            <div id="dashCsvPreviewWrap" style="display:none;">
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Preview (first 5 rows):</div>
+                <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:8px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead><tr id="dashCsvPreviewHead" style="background:#f8fafc;"></tr></thead>
+                        <tbody id="dashCsvPreviewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button type="button" id="dashCsvSubmitBtn" onclick="dashSubmitCSV()" class="btn-primary" style="width:100%; display:none;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Allocate All Products
+            </button>
+        </div>
+
     </div>
 </div>
+<style>
+#dashCsvDropZone.drag-over { border-color:var(--primary-accent); background:#EFF6FF; }
+</style>
+
 
 <!-- ========================================== -->
 <!-- FEATURE 2: SEARCH PRODUCT MODAL -->
@@ -453,14 +538,21 @@ const modals = ['addModal', 'searchModal', 'reorgModal'];
 function openModal(id) {
     document.getElementById(id).style.display = 'flex';
     if(id === 'reorgModal') fetchReorgPreStats();
-    if(id === 'addModal') {
-        goToAddStep(1);
-        fetchWhForAdd();
-    }
 }
 function closeModal(id) {
     document.getElementById(id).style.display = 'none';
-    if(id === 'addModal') document.getElementById('addForm').reset();
+    if(id === 'addModal') {
+        document.getElementById('dashSingleForm').reset();
+        document.getElementById('dashSingleResult').style.display = 'none';
+        document.getElementById('dashSpPreview').style.display = 'none';
+        document.getElementById('dashCsvResult').style.display = 'none';
+        document.getElementById('dashCsvPreviewWrap').style.display = 'none';
+        document.getElementById('dashCsvSubmitBtn').style.display = 'none';
+        document.getElementById('dashCsvFileName').style.display = 'none';
+        document.getElementById('dashWhCapBar').style.display = 'none';
+        document.getElementById('dashCsvFileInput').value = '';
+        _dashCsvRows = [];
+    }
     if(id === 'searchModal') {
         document.getElementById('searchForm').reset();
         document.getElementById('searchFoundList').style.display = 'none';
@@ -480,99 +572,251 @@ document.addEventListener('keydown', function(event) {
 
 
 // ==========================================
-// FEATURE 1: ADD NEW PRODUCT PREDICTIVE LOGIC
+// FEATURE 1: ADD PRODUCT — WAREHOUSE DROPDOWN + SINGLE/CSV TABS
 // ==========================================
-function goToAddStep(step) {
-    document.getElementById('addStep1').style.display = step === 1 ? 'block' : 'none';
-    document.getElementById('addStep2').style.display = step === 2 ? 'block' : 'none';
+let _dashWhData = []; // Cached warehouse data from API
+let _dashCsvRows = [];
+
+function openDashAddModal() {
+    document.getElementById('addModal').style.display = 'flex';
+    dashSwitchTab('single');
+    loadDashWarehouses();
 }
 
-async function fetchWhForAdd() {
-    document.getElementById('whLoader').style.display = 'block';
-    document.getElementById('whList').innerHTML = '';
-    
+async function loadDashWarehouses() {
+    const sel = document.getElementById('dashWhSelect');
     try {
-        const res = await fetch('/warehouse/list').then(r=>r.json());
-        document.getElementById('whLoader').style.display = 'none';
-        
-        if(res.success && res.warehouses.length > 0) {
+        const res = await fetch('/warehouse/list').then(r => r.json());
+        if (res.success && res.warehouses.length > 0) {
+            _dashWhData = res.warehouses;
+            sel.innerHTML = '<option value="">— Select a warehouse —</option>';
             res.warehouses.forEach(w => {
-                const opt = document.createElement('div');
-                opt.style.cssText = `padding:12px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background:#fff; transition:border-color 200ms ease;`;
-                opt.onclick = () => { opt.style.borderColor='#378ADD'; selectWh(w.id, w.name); };
-                opt.innerHTML = `
-                    <div style="font-weight:600; margin-bottom:4px; font-size:15px;">${w.name}</div>
-                    <div style="font-size:12px; color:#64748b; margin-bottom:8px;">${w.location} | Free Bins: <strong style="color:#0f172a;">${w.freeBins}</strong></div>
-                    <div class="cap-track" style="margin-bottom:4px;"><div class="cap-fill" style="width:${w.utilPercent}%"></div></div>
-                    <div style="font-size:11px; color:#64748b; text-align:right;">${w.utilPercent}% Utilization</div>
-                `;
-                document.getElementById('whList').appendChild(opt);
+                const opt = document.createElement('option');
+                opt.value = w.id;
+                opt.textContent = `${w.name}  (${w.utilPercent}% full, ${w.freeBins} bins free)`;
+                sel.appendChild(opt);
             });
         } else {
-            document.getElementById('whList').innerHTML = '<div style="font-size:13px; color:#A32D2D;">No warehouses available. Create one first!</div>';
+            sel.innerHTML = '<option value="">No warehouses found — create one first</option>';
         }
     } catch(e) {
-        document.getElementById('whLoader').style.display = 'none';
+        sel.innerHTML = '<option value="">Error loading warehouses</option>';
     }
 }
 
-function selectWh(id, name) {
-    document.getElementById('addWarehouseId').value = id;
-    document.getElementById('selWhBadge').innerText = name;
-    goToAddStep(2);
+function onDashWhChange() {
+    const sel = document.getElementById('dashWhSelect');
+    const wid = sel.value;
+    document.getElementById('dashSpWarehouseId').value = wid;
+
+    const capBar = document.getElementById('dashWhCapBar');
+    if (!wid) { capBar.style.display = 'none'; return; }
+
+    const w = _dashWhData.find(x => String(x.id) === String(wid));
+    if (!w) { capBar.style.display = 'none'; return; }
+
+    const pct = w.utilPercent;
+    const fillColor = pct > 85 ? 'var(--danger)' : pct > 60 ? 'var(--warning)' : 'var(--primary-accent)';
+    document.getElementById('dashWhCapFill').style.width = pct + '%';
+    document.getElementById('dashWhCapFill').style.background = fillColor;
+    document.getElementById('dashWhCapPct').textContent = pct + '%';
+    document.getElementById('dashWhCapLabel').textContent = pct > 85 ? 'Critical' : pct > 60 ? 'Moderate' : 'Healthy';
+    document.getElementById('dashWhAvailSpace').textContent = w.availableSpace.toFixed(2) + ' m³';
+    document.getElementById('dashWhFreeBins').textContent = w.freeBins;
+    capBar.style.display = 'block';
+
+    // Update predictive preview if size/qty already entered
+    updateDashSpacePreview();
 }
 
-const sizeInp = document.getElementById('addSize');
-const qtyInp = document.getElementById('addQty');
-const reqOut = document.getElementById('predReq');
-
-function updatePredictivePanel() {
-    const s = parseFloat(sizeInp.value) || 0;
-    const q = parseInt(qtyInp.value) || 0;
-    reqOut.innerText = (s * q).toFixed(1) + " sq ft";
+function dashSwitchTab(tab) {
+    const isSingle = tab === 'single';
+    document.getElementById('dashPanelSingle').style.display = isSingle ? 'block' : 'none';
+    document.getElementById('dashPanelCSV').style.display = isSingle ? 'none' : 'flex';
+    document.getElementById('dashTabSingle').className = isSingle ? 'btn-primary' : 'btn-outlined';
+    document.getElementById('dashTabCSV').className   = isSingle ? 'btn-outlined' : 'btn-primary';
 }
-sizeInp.addEventListener('input', updatePredictivePanel);
-qtyInp.addEventListener('input', updatePredictivePanel);
 
-document.getElementById('addForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('addSubmitBtn');
-    btn.innerText = "Allocating via Knapsack...";
+// ── Live space estimation ──────────────────────────────────────
+function updateDashSpacePreview() {
+    const size = parseFloat(document.getElementById('dashSpSize').value) || 0;
+    const qty  = parseInt(document.getElementById('dashSpQty').value) || 0;
+    const req  = size * qty;
+    const prev = document.getElementById('dashSpPreview');
+
+    if (req > 0) {
+        document.getElementById('dashSpSpaceVal').textContent = req.toFixed(3) + ' m³';
+        // Show available space for selected warehouse
+        const wid = document.getElementById('dashSpWarehouseId').value;
+        const w   = _dashWhData.find(x => String(x.id) === String(wid));
+        if (w) {
+            document.getElementById('dashSpAvailVal').textContent = w.availableSpace.toFixed(2) + ' m³';
+            const fits = req <= w.availableSpace;
+            document.getElementById('dashSpFitMsg').textContent = fits
+                ? '✓ Fits — Knapsack resolver will find best bin automatically.'
+                : '⚠ Exceeds available space in this warehouse.';
+            document.getElementById('dashSpFitMsg').style.color = fits ? '#16a34a' : '#dc2626';
+        } else {
+            document.getElementById('dashSpAvailVal').textContent = '— (select warehouse)';
+        }
+        prev.style.display = 'block';
+    } else {
+        prev.style.display = 'none';
+    }
+}
+['dashSpSize', 'dashSpQty'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateDashSpacePreview);
+});
+
+// ── Single product submit ──────────────────────────────────────
+async function dashSubmitSingleProduct() {
+    const name     = document.getElementById('dashSpName').value.trim();
+    const sku      = document.getElementById('dashSpSku').value.trim();
+    const qty      = parseInt(document.getElementById('dashSpQty').value) || 0;
+    const priority = document.getElementById('dashSpPriority').value;
+    const size     = parseFloat(document.getElementById('dashSpSize').value) || 0;
+    const weight   = parseFloat(document.getElementById('dashSpWeight').value) || 0;
+    const wid      = document.getElementById('dashSpWarehouseId').value;
+
+    if (!wid) { dashShowSingleResult('error', 'Please select a warehouse first.'); return; }
+    if (!name || qty < 1 || size <= 0) { dashShowSingleResult('error', 'Please fill in Name, Quantity, and Size.'); return; }
+
+    const btn = event.target;
     btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Allocating via Knapsack...';
 
     try {
-        const payload = {
-            warehouse_id: document.getElementById('addWarehouseId').value,
-            name: document.getElementById('addName').value,
-            sku: document.getElementById('addSku').value,
-            category: document.getElementById('addCategory').value,
-            quantity: document.getElementById('addQty').value,
-            weight: document.getElementById('addWeight').value, // Fixed referencing nonexistent addWeight
-            size: document.getElementById('addSize').value,
-            priority: document.getElementById('addPriority').value
-        };
-
-        const response = await fetch('/inventory/add', {
+        const r = await fetch('/inventory/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ name, sku, quantity: qty, priority, size, weight, warehouse_id: wid })
         });
-        const result = await response.json();
-
-        if (result.success) {
-            closeModal('addModal');
-            showToast(`Product Assigned safely to Bin: ${result.binAssigned}`);
-            setTimeout(() => window.location.reload(), 1500); 
+        const data = await r.json();
+        if (data.success) {
+            dashShowSingleResult('success', `✓ "${name}" added to Bin ${data.binAssigned}. Space remaining: ${parseFloat(data.remainingSpace).toFixed(2)} m³`);
+            document.getElementById('dashSingleForm').reset();
+            document.getElementById('dashSpPreview').style.display = 'none';
+            document.getElementById('dashWhCapBar').style.display = 'none';
+            document.getElementById('dashSpWarehouseId').value = '';
+            document.getElementById('dashWhSelect').value = '';
+            _dashWhData = [];
+            loadDashWarehouses();
+            setTimeout(() => window.location.reload(), 2000);
         } else {
-            alert("Allocation Failed: " + (result.error || "Unknown Space Limits"));
+            dashShowSingleResult('error', '✗ ' + (data.error || 'Could not add product'));
         }
-    } catch(err) {
-        alert("Server Error while posting product.");
-    } finally {
-        btn.innerText = "Add & Allocate";
-        btn.disabled = false;
+    } catch(e) {
+        dashShowSingleResult('error', '✗ Network error: ' + e.message);
     }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Add to Warehouse';
+}
+
+function dashShowSingleResult(type, msg) {
+    const el = document.getElementById('dashSingleResult');
+    el.style.display = 'block';
+    el.style.background  = type === 'success' ? '#f0fdf4' : '#fef2f2';
+    el.style.color       = type === 'success' ? '#166534' : '#991b1b';
+    el.style.border      = '1px solid ' + (type === 'success' ? '#bbf7d0' : '#fecaca');
+    el.textContent = msg;
+}
+
+// ── CSV Upload ─────────────────────────────────────────────────
+const dashDropZone  = document.getElementById('dashCsvDropZone');
+const dashFileInput = document.getElementById('dashCsvFileInput');
+
+dashDropZone.addEventListener('dragover', e => { e.preventDefault(); dashDropZone.classList.add('drag-over'); });
+dashDropZone.addEventListener('dragleave', () => dashDropZone.classList.remove('drag-over'));
+dashDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dashDropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) dashHandleCSVFile(file);
 });
+dashFileInput.addEventListener('change', () => {
+    if (dashFileInput.files[0]) dashHandleCSVFile(dashFileInput.files[0]);
+});
+
+function dashHandleCSVFile(file) {
+    document.getElementById('dashCsvFileName').style.display = 'block';
+    document.getElementById('dashCsvFileNameText').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+    const reader = new FileReader();
+    reader.onload = e => dashParseCSVPreview(e.target.result);
+    reader.readAsText(file);
+}
+
+function dashParseCSVPreview(text) {
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) { dashShowCSVResult('error', 'CSV must have a header row + at least one data row.'); return; }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    _dashCsvRows = [];
+    for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const row = {};
+        headers.forEach((h, idx) => row[h] = vals[idx] || '');
+        _dashCsvRows.push(row);
+    }
+
+    const head = document.getElementById('dashCsvPreviewHead');
+    head.innerHTML = headers.map(h => `<th style="padding:6px 10px;text-align:left;text-transform:uppercase;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-color);">${h}</th>`).join('');
+    const body = document.getElementById('dashCsvPreviewBody');
+    body.innerHTML = _dashCsvRows.slice(0, 5).map(row =>
+        `<tr>${headers.map(h => `<td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;">${row[h] || '—'}</td>`).join('')}</tr>`
+    ).join('');
+    document.getElementById('dashCsvPreviewWrap').style.display = 'block';
+    document.getElementById('dashCsvSubmitBtn').style.display = 'block';
+    dashShowCSVResult('info', `${_dashCsvRows.length} rows detected. Click Upload to begin allocation.`);
+}
+
+function dashShowCSVResult(type, msg) {
+    const el = document.getElementById('dashCsvResult');
+    el.style.display = 'block';
+    const colors = {
+        success: ['#f0fdf4','#166534','#bbf7d0'],
+        error:   ['#fef2f2','#991b1b','#fecaca'],
+        info:    ['#EFF6FF','#1e40af','#bfdbfe']
+    };
+    const [bg, col, border] = colors[type] || colors.info;
+    el.style.background = bg; el.style.color = col; el.style.border = `1px solid ${border}`;
+    el.textContent = msg;
+}
+
+async function dashSubmitCSV() {
+    const wid = document.getElementById('dashSpWarehouseId').value;
+    if (!wid) { dashShowCSVResult('error', 'Please select a warehouse in the dropdown above.'); return; }
+    if (!_dashCsvRows.length) return;
+
+    const btn = document.getElementById('dashCsvSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
+    try {
+        const r = await fetch('/inventory/bulk-add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rows: _dashCsvRows, warehouse_id: wid })
+        });
+        const data = await r.json();
+        if (data.success) {
+            let msg = `✓ ${data.added} product(s) added.`;
+            if (data.skipped > 0) msg += ` ${data.skipped} skipped (warehouse mismatch or no space).`;
+            if (data.errors && data.errors.length) msg += '\nSkip reasons: ' + data.errors.slice(0, 3).join('; ');
+            dashShowCSVResult('success', msg);
+            document.getElementById('dashCsvSubmitBtn').style.display = 'none';
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            dashShowCSVResult('error', '✗ ' + (data.error || 'Upload failed'));
+        }
+    } catch(e) {
+        dashShowCSVResult('error', '✗ Network error: ' + e.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload & Allocate All Products';
+}
+
+
 
 
 // ==========================================

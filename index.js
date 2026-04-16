@@ -27,6 +27,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes.js');
 
 // API Algorithmic Routes (Knapsack + Hashing)
 const apiRoutes = require('./routes/apiRoutes.js');
+const { updateSettings, updateProduct } = require('./controllers/apiController.js');
 
 // Middleware ---------------------------------------------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, "public")));     // Serve /public correctly
@@ -300,6 +301,12 @@ app.post('/inventory/bulk-add', requireAuth, async (req, res) => {
 });
 
 // ──────────────────────────────────────────────────────────────
+// INVENTORY: UPDATE PRODUCT  (POST /inventory/update)
+// Must be before /:warehouseId param route
+// ──────────────────────────────────────────────────────────────
+app.post('/inventory/update', requireAuth, updateProduct);
+
+// ──────────────────────────────────────────────────────────────
 // INVENTORY: CSV TEMPLATE DOWNLOAD  (MUST be before /:warehouseId)
 // ──────────────────────────────────────────────────────────────
 app.get('/inventory/template', requireAuth, (req, res) => {
@@ -340,8 +347,7 @@ app.get("/inventory/:warehouseId", requireAuth, async (req, res) => {
     if (!whRes.rows.length) return res.status(404).send('Warehouse not found');
     const wh = whRes.rows[0];
     const cap  = parseFloat(wh.total_capacity) || 0;
-    const used = parseFloat(wh.total_used) || 0;
-    const util = cap > 0 ? Math.round((used / cap) * 100) : 0;
+    let used = parseFloat(wh.total_used) || 0;
 
     // Fetch products — using ONLY real schema columns
     const prodRes = await db.query(`
@@ -354,6 +360,18 @@ app.get("/inventory/:warehouseId", requireAuth, async (req, res) => {
       WHERE r.warehouse_id = $1
       ORDER BY p.priority DESC, p.name
     `, [warehouseId]);
+
+    // Recalculate actual used space from products just in case bins.current_load is out of sync
+    let actual_used = 0;
+    prodRes.rows.forEach(p => {
+       actual_used += (parseFloat(p.size) || 0) * (parseInt(p.quantity) || 0);
+    });
+    // Use the actual used space if it's larger (handles cases where DB current_load wasn't properly synced)
+    if (actual_used > used) {
+        used = actual_used;
+    }
+
+    const util = cap > 0 ? Math.min(100, Math.round((used / cap) * 100)) : 0;
 
     // Map priority integer to label
     const prioLabel = { 2: 'High', 1: 'Medium', 0: 'Low' };
@@ -422,9 +440,13 @@ app.get("/reports", requireAuth, (req, res) => {
 app.get("/settings", requireAuth, (req, res) => {
   res.render("settings", { 
       name: req.session.name || "Sarthak", 
-      email: req.session.email || "sarthak@stockmate.com" 
+      email: req.session.email || "sarthak@stockmate.com",
+      success: req.query.success === '1',
+      error: req.query.error || null
   });
 });
+
+app.post("/settings/update", requireAuth, updateSettings);
 
 app.post("/logout", (req, res) => {
   if (!req.session) return res.redirect('/login');

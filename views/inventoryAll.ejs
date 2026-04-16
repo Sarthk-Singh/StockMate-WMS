@@ -115,6 +115,62 @@ tbody tr:last-child td { border-bottom: none; }
 
 .empty-state { text-align: center; padding: 5rem 2rem; color: var(--text-muted); }
 .empty-icon  { font-size: 48px; margin-bottom: 1rem; opacity: 0.25; }
+
+/* ── Manage Modal ─────────────────────────────── */
+.modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 150ms ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 2rem;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    transform: translateY(12px);
+    transition: transform 150ms ease;
+}
+.modal-backdrop.open .modal-box { transform: translateY(0); }
+.modal-title {
+    font-size: 17px; font-weight: 600; color: var(--text-primary);
+    margin: 0 0 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.modal-close {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: #f1f5f9;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); font-size: 13px;
+    transition: background 150ms ease;
+}
+.modal-close:hover { background: #e2e8f0; }
+.modal-field { margin-bottom: 1rem; }
+.modal-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.modal-field input, .modal-field select {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px; font-size: 14px;
+    color: var(--text-primary); background: white;
+    box-sizing: border-box; outline: none;
+    transition: border-color 150ms ease;
+}
+.modal-field input:focus, .modal-field select:focus { border-color: var(--primary-accent); }
+.modal-field input[readonly] { background: #f8fafc; color: var(--text-muted); cursor: not-allowed; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; justify-content: flex-end; }
+.btn-manage {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--primary-accent); color: var(--primary-accent);
+    background: transparent; border-radius: 6px; cursor: pointer;
+    transition: all 150ms ease;
+}
+.btn-manage:hover { background: #eff6ff; }
 </style>
 
 <div class="inv-container">
@@ -194,6 +250,7 @@ tbody tr:last-child td { border-bottom: none; }
                     <th>Size (m²)</th>
                     <th>Weight (kg)</th>
                     <th>Added</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="productTable">
@@ -234,11 +291,23 @@ tbody tr:last-child td { border-bottom: none; }
                     <td style="color:var(--text-secondary); font-size:13px;"><%= p.size || '—' %></td>
                     <td style="color:var(--text-secondary); font-size:13px;"><%= p.weight || '—' %></td>
                     <td style="color:var(--text-muted); font-size:12px;"><%= addedDate %></td>
+                    <td>
+                        <button class="btn-manage"
+                            data-id="<%= p.product_id %>"
+                            data-name="<%= p.name %>"
+                            data-quantity="<%= p.quantity %>"
+                            data-priority="<%= p.priorityLabel %>"
+                            data-size="<%= p.size %>"
+                            data-bin="<%= p.bin_id %>"
+                            data-wh="<%= p.warehouse_id %>">
+                            <i class="fa-solid fa-pen-to-square" style="font-size:11px;"></i> Manage
+                        </button>
+                    </td>
                 </tr>
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="empty-state">
                             <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
                             <div style="font-size:17px; font-weight:500; color:var(--text-primary); margin-bottom:8px;">No products yet</div>
@@ -258,6 +327,54 @@ tbody tr:last-child td { border-bottom: none; }
             <span>Showing <strong id="shownCount"><%= products.length %></strong> of <strong><%= products.length %></strong> items</span>
         </div>
         <% } %>
+    </div>
+</div>
+
+<!-- ── Manage Product Modal ────────────────────────────────── -->
+<div id="manageBackdrop" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-title">
+            <span><i class="fa-solid fa-pen-to-square" style="font-size:15px; margin-right:8px; color:var(--primary-accent);"></i>Manage Product</span>
+            <button class="modal-close" id="manageClose"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form action="/inventory/update" method="POST">
+            <input type="hidden" name="product_id"   id="m_product_id">
+            <input type="hidden" name="bin_id"       id="m_bin_id">
+            <input type="hidden" name="size"         id="m_size">
+            <input type="hidden" name="warehouse_id" id="m_warehouse_id">
+
+            <div class="modal-field">
+                <label>Product Name</label>
+                <input type="text" id="m_name" readonly>
+            </div>
+
+            <div class="modal-grid">
+                <div class="modal-field">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" id="m_quantity" min="0" required>
+                </div>
+                <div class="modal-field">
+                    <label>Priority</label>
+                    <select name="priority" id="m_priority">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="manageCancelBtn"
+                    style="padding:9px 18px; border:1px solid var(--border-color); border-radius:8px;
+                           background:white; font-size:14px; cursor:pointer; color:var(--text-secondary);">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-primary" style="padding:9px 20px; font-size:14px;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -289,4 +406,31 @@ tbody tr:last-child td { border-bottom: none; }
     if(searchInput)    searchInput.addEventListener('input', filterTable);
     if(priorityFilter) priorityFilter.addEventListener('change', filterTable);
     if(stockFilter)    stockFilter.addEventListener('change', filterTable);
+
+    // ── Manage Modal Logic ────────────────────────────────────
+    const backdrop  = document.getElementById('manageBackdrop');
+    const closeBtn  = document.getElementById('manageClose');
+    const cancelBtn = document.getElementById('manageCancelBtn');
+
+    function openManageModal(btn) {
+        document.getElementById('m_product_id').value   = btn.dataset.id;
+        document.getElementById('m_bin_id').value       = btn.dataset.bin;
+        document.getElementById('m_size').value         = btn.dataset.size;
+        document.getElementById('m_warehouse_id').value = btn.dataset.wh;
+        document.getElementById('m_name').value         = btn.dataset.name;
+        document.getElementById('m_quantity').value     = btn.dataset.quantity;
+        document.getElementById('m_priority').value     = btn.dataset.priority;
+        backdrop.classList.add('open');
+    }
+
+    function closeManageModal() { backdrop.classList.remove('open'); }
+
+    document.querySelectorAll('.btn-manage').forEach(btn => {
+        btn.addEventListener('click', () => openManageModal(btn));
+    });
+
+    closeBtn.addEventListener('click', closeManageModal);
+    cancelBtn.addEventListener('click', closeManageModal);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) closeManageModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeManageModal(); });
 </script>

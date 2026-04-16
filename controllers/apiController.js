@@ -1,4 +1,5 @@
 const db = require('../db.js');
+const bcrypt = require('bcryptjs');
 
 // ==========================================
 // DB ENFORCEMENT LAYER
@@ -393,11 +394,147 @@ const reorganizeBins = async (req, res) => {
     }
 };
 
+// ==========================================
+// INVENTORY: UPDATE PRODUCT (Manage Modal)
+// ==========================================
+const updateProduct = async (req, res) => {
+    const { product_id, quantity, priority, bin_id, size } = req.body;
+    const newQty  = parseInt(quantity);
+    const itemSize = parseFloat(size) || 0;
+
+    // Map priority string → integer
+    const prioMap = { 'High': 2, 'Medium': 1, 'Low': 0 };
+    const prioInt = prioMap[priority] !== undefined ? prioMap[priority] : 1;
+
+    try {
+        // Fetch current product
+        const productRes = await db.query(
+            'SELECT * FROM products WHERE product_id = $1',
+            [product_id]
+        );
+        if (!productRes.rows.length) {
+            return res.status(404).send('Product not found');
+        }
+        const product = productRes.rows[0];
+        const oldQty  = parseInt(product.quantity);
+
+        // Fetch bin
+        const binRes = await db.query(
+            'SELECT * FROM bins WHERE bin_id = $1',
+            [bin_id || product.bin_id]
+        );
+        if (!binRes.rows.length) {
+            return res.status(404).send('Bin not found');
+        }
+        const bin = binRes.rows[0];
+
+        const delta         = newQty - oldQty;
+        const spacePerUnit  = itemSize || parseFloat(product.size) || 0;
+        const spaceDelta    = delta * spacePerUnit;
+
+        // Check capacity only when increasing
+        if (delta > 0) {
+            const currentLoad = parseFloat(bin.current_load) || 0;
+            const capacity    = parseFloat(bin.capacity) || 0;
+            if (currentLoad + spaceDelta > capacity) {
+                return res.status(400).send(
+                    `Not enough bin space. Available: ${(capacity - currentLoad).toFixed(2)} m³, need: ${spaceDelta.toFixed(2)} m³`
+                );
+            }
+        }
+
+        // Handle zero quantity → delete product, free up bin space
+        if (newQty === 0) {
+            await db.query('DELETE FROM products WHERE product_id = $1', [product_id]);
+            const freedSpace = oldQty * spacePerUnit;
+            const newLoad = Math.max(0, (parseFloat(bin.current_load) || 0) - freedSpace);
+            await db.query('UPDATE bins SET current_load = $1 WHERE bin_id = $2', [newLoad, bin.bin_id]);
+        } else {
+            // Update product
+            await db.query(
+                'UPDATE products SET quantity = $1, priority = $2 WHERE product_id = $3',
+                [newQty, prioInt, product_id]
+            );
+            // Adjust bin load
+            const newLoad = Math.max(0, (parseFloat(bin.current_load) || 0) + spaceDelta);
+            await db.query('UPDATE bins SET current_load = $1 WHERE bin_id = $2', [newLoad, bin.bin_id]);
+        }
+
+        // Log activity
+        await db.query(
+            'INSERT INTO activity_log (action, detail, user_id) VALUES ($1, $2, $3)',
+            ['Product updated', `${product.name} qty ${oldQty}→${newQty}, priority→${priority}`, req.session?.userId || null]
+        );
+
+        // Rebuild hash map async
+        rebuildHashMap();
+
+        // Redirect back to the warehouse inventory page
+        const warehouseId = req.body.warehouse_id;
+        return res.redirect(warehouseId ? `/inventory/${warehouseId}` : '/warehouse');
+
+    } catch (err) {
+        console.error('[updateProduct] Error:', err);
+        return res.status(500).send('Server error: ' + err.message);
+    }
+};
+
+// ==========================================
+// SETTINGS: UPDATE PROFILE / PASSWORD
+// ==========================================
+const updateSettings = async (req, res) => {
+    const userId = req.session.userId;
+    const { fullName, currentPassword, newPassword, confirmPassword } = req.body;
+
+    try {
+        const userRes = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+
+        if (!userRes.rows.length) {
+            return res.status(404).send('User not found');
+        }
+
+        const user = userRes.rows[0];
+
+        // UPDATE NAME
+        if (fullName && fullName.trim()) {
+            await db.query('UPDATE users SET name = $1 WHERE user_id = $2', [fullName.trim(), userId]);
+            req.session.name = fullName.trim();
+        }
+
+        // UPDATE PASSWORD (only if any password field is provided)
+        if (currentPassword || newPassword || confirmPassword) {
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                return res.redirect('/settings?error=all_password_fields_required');
+            }
+
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.redirect('/settings?error=wrong_password');
+            }
+
+            if (newPassword !== confirmPassword) {
+                return res.redirect('/settings?error=passwords_mismatch');
+            }
+
+            const hashed = await bcrypt.hash(newPassword, 10);
+            await db.query('UPDATE users SET password = $1 WHERE user_id = $2', [hashed, userId]);
+        }
+
+        return res.redirect('/settings?success=1');
+
+    } catch (err) {
+        console.error('[updateSettings] Error:', err);
+        return res.status(500).send('Server error');
+    }
+};
+
 module.exports = {
     listWarehouses,
     addProduct,
     searchProduct,
     retrieveProduct,
     getStats,
-    reorganizeBins
+    reorganizeBins,
+    updateProduct,
+    updateSettings
 };
